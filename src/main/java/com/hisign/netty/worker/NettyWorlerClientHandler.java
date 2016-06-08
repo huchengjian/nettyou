@@ -62,12 +62,17 @@ public class NettyWorlerClientHandler extends ChannelHandlerAdapter {
         firstMessage = Unpooled.buffer(1024);
         
         JSONObject jo = new JSONObject();
-        jo.put(Message.MessageYype, 2);
+        jo.put(Message.MessageType, 2);
         jo.put(Message.DATA, "222222");
         
         firstMessage.writeBytes(jo.toJSONString().getBytes());
         ctx.writeAndFlush(firstMessage);
     }
+    
+    private void jobRequest() {
+    	
+	}
+    
 
     /**
      * 非活跃通道.
@@ -92,7 +97,7 @@ public class NettyWorlerClientHandler extends ChannelHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         logger.info(ctx.channel().remoteAddress() + "：" + msg);
         
-        System.out.println("client channelRead..");
+        System.out.println("worker channelRead..");
         
         ByteBuf buf = (ByteBuf) msg;
         byte[] req = new byte[buf.readableBytes()];
@@ -108,7 +113,7 @@ public class NettyWorlerClientHandler extends ChannelHandlerAdapter {
         compute();
 
         JSONObject result = new JSONObject();
-        result.put(Message.MessageYype, 3);
+        result.put(Message.MessageType, 3);
         result.put(Message.DATA, conn);
         result.put(Message.ConnId, connId);
 
@@ -146,6 +151,8 @@ public class NettyWorlerClientHandler extends ChannelHandlerAdapter {
      */
     @Override
     public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
+    	System.out.println("close current channel");
+    	WorkerRunnable.workerCount.decrementAndGet();
         super.close(ctx, promise);
     }
 

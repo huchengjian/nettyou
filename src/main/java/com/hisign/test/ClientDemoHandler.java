@@ -57,7 +57,7 @@ public class ClientDemoHandler extends ChannelHandlerAdapter {
         firstMessage = Unpooled.buffer(1024);
         
         JSONObject jo = new JSONObject();
-        jo.put(Message.MessageYype, 1);
+        jo.put(Message.MessageType, 1);
         jo.put(Message.DATA, "111111");
         
         firstMessage.writeBytes(jo.toJSONString().getBytes());

@@ -28,6 +28,9 @@ public class NettyServer {
 	}
 	
     public void bind(int port) throws Exception {
+    	
+    	System.out.println("----------------启动服务器----------------");
+    	
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         try {
@@ -74,7 +77,6 @@ public class NettyServer {
 
             }
         }
-
         new NettyServer().bind(port);
     }
 }

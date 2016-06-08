@@ -11,6 +11,8 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
+import com.hisign.constants.SystemConstants;
+
 /**
  * 客户端类.
  */
@@ -53,11 +55,12 @@ public class NettyWorker {
     public static void main(String[] args) {
     	NettyWorker nettyClient = new NettyWorker();
     	try {
-			nettyClient.connect("127.0.0.1", 8099);
+    		for (int i = 0; i < SystemConstants.WorkerCount; i++) {
+    			nettyClient.connect("127.0.0.1", 8099);
+    		}
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
-
 }

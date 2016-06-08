@@ -1,13 +1,11 @@
 package com.netty.start.server;
 
-
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-
 
 /**
  * 服务器类.
@@ -42,8 +40,8 @@ public class NettyServer {
             //关闭访问者的事件循环
             childGroup.shutdownGracefully();
         }
-
     }
+    
     public static void main(String[] args) {
 		System.out.println("hha");
 		NettyServer server = new NettyServer();

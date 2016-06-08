@@ -31,6 +31,14 @@ public class NettyServerHandler extends ChannelHandlerAdapter {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         logger.info(ctx.channel().remoteAddress() + "：Server 通道激活");
+//        int sum = 0;
+//        while(true){
+//        	for (int i = 0; i < 10000; i++) {
+//        		sum++;
+//			}
+//        	System.out.println("next loop");
+//        	Thread.sleep(1000);
+//        }
     }
 
     @Override
@@ -68,8 +76,10 @@ public class NettyServerHandler extends ChannelHandlerAdapter {
      */
     private void messageProcess(String message, Connection connection, ChannelHandlerContext ctx){
     	
+    	System.out.println("messageProcess\n");
+    	
     	JSONObject js = JSON.parseObject(message);
-    	int type = (int) js.get(Message.MessageYype);
+    	int type = (int) js.get(Message.MessageType);
     	
     	switch (type) {
 		case 1:
@@ -79,13 +89,17 @@ public class NettyServerHandler extends ChannelHandlerAdapter {
 		case 2:
 			//worker 请求
 			Connection task = server.allConnChannelQueue.poll();
-			System.out.println(task.hashCode());
-			
-        	server.consumingChannel.put(String.valueOf(task.hashCode()), task);
-        	JSONObject jo = new JSONObject();
-        	jo.put(Message.MessageYype, 2);
-        	jo.put(Message.DATA, task);
-        	jo.put(Message.ConnId, task.hashCode());
+			JSONObject jo = new JSONObject();
+			if(task != null){
+				server.consumingChannel.put(String.valueOf(task.hashCode()), task);
+				jo.put(Message.MessageType, 2);
+				jo.put(Message.DATA, task);
+				jo.put(Message.ConnId, task.hashCode());
+				jo.put(Message.Status, 0);
+			}
+			else{
+				jo.put(Message.Status, -1);
+			}
         	
         	byte[] data = jo.toJSONString().getBytes();
         	ByteBuf bb = Unpooled.buffer(1024);
