@@ -49,9 +49,33 @@ public class ClientDemo {
     }
     
     public static void main(String[] args) {
-    	ClientDemo nettyClient = new ClientDemo();
-    	try {
-			nettyClient.connect("127.0.0.1", 8099);
+        ClientDemo nettyClient = new ClientDemo();
+
+        int count = 0;
+
+        try {
+            while(true){
+                for (int i = 0; i<10; i++){
+                    System.out.println("new conn");
+                    new Thread(new Runnable(){
+                        @Override
+                        public void run() {
+                            ClientDemo nettyClient = new ClientDemo();
+                            try {
+                                nettyClient.connect("127.0.0.1", 8099);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                    }).start();
+                }
+                count ++;
+                if (count >= 3){
+                    break;
+                }
+            }
+
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

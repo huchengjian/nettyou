@@ -2,6 +2,6 @@ package com.hisign.constants;
 
 public class SystemConstants {
 	
-	public static int WorkerCount = 16;
+	public static int MaxWorker = 3;
 
 }

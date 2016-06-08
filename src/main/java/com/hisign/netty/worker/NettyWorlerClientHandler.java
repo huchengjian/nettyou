@@ -24,7 +24,6 @@ public class NettyWorlerClientHandler extends ChannelHandlerAdapter {
 	private ByteBuf firstMessage;
 	
 	public NettyWorlerClientHandler() {
-		
 		byte[] req = "Hello hugo".getBytes();
         firstMessage = Unpooled.buffer(req.length);
         firstMessage.writeBytes(req);
@@ -83,6 +82,7 @@ public class NettyWorlerClientHandler extends ChannelHandlerAdapter {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         logger.info(ctx.channel().remoteAddress() + "：通道失效");
+        Worker.workerCount.getAndDecrement();
 //        super.channelInactive(ctx);
     }
 
@@ -105,7 +105,14 @@ public class NettyWorlerClientHandler extends ChannelHandlerAdapter {
         
         String body = new String(req, "UTF-8");
         JSONObject jo = JSON.parseObject(body);
-        String conn = (String)jo.get("Data");
+        
+        int status = (int)jo.get(Message.Status);
+        if (status < 0) {
+        	logger.info("Worker 收到消息错误");
+        	ctx.close();
+		}
+        
+        JSONObject conn = (JSONObject) jo.get(Message.DATA);
         int connId = (int) jo.get(Message.ConnId);
 
         System.out.println("" + body);
@@ -151,8 +158,8 @@ public class NettyWorlerClientHandler extends ChannelHandlerAdapter {
      */
     @Override
     public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
-    	System.out.println("close current channel");
-    	WorkerRunnable.workerCount.decrementAndGet();
+    	System.out.println("close current worker channel");
+    	Worker.workerCount.getAndDecrement();
         super.close(ctx, promise);
     }
 

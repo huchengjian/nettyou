@@ -85,9 +85,11 @@ public class NettyServerHandler extends ChannelHandlerAdapter {
 		case 1:
 			//外部请求
 			server.allConnChannelQueue.add (connection);
+			logger.info("新增任务，任务数:"+ server.allConnChannelQueue.size());
 			break;
 		case 2:
 			//worker 请求
+			logger.info("worker消费任务, 任务数:"+ server.allConnChannelQueue.size());
 			Connection task = server.allConnChannelQueue.poll();
 			JSONObject jo = new JSONObject();
 			if(task != null){
@@ -108,7 +110,7 @@ public class NettyServerHandler extends ChannelHandlerAdapter {
 			break;
 		case 3:
 			//worker完成任务，返回数据
-			System.out.println("完成任务");
+			logger.info("完成任务");
 			JSONObject para = JSON.parseObject(message);
 //	        String conn = (String) para.get("Data");
 	        int connId = (int) para.get(Message.ConnId);
@@ -119,7 +121,7 @@ public class NettyServerHandler extends ChannelHandlerAdapter {
 	        ByteBuf bb3 = Unpooled.buffer(1024);
 	        bb3.writeBytes(re);
 	        conn.channelHandlerContext.writeAndFlush(bb3);
-	        
+			ctx.close();
 			break;
 		default:
 			System.out.println("type error!");
@@ -130,7 +132,7 @@ public class NettyServerHandler extends ChannelHandlerAdapter {
 
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("server channelReadComplete..");
+        logger.info("server channelReadComplete..");
         ctx.flush();//刷新后才将数据发出到SocketChannel
     }
 

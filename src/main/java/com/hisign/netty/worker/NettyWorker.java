@@ -18,46 +18,45 @@ import com.hisign.constants.SystemConstants;
  */
 public class NettyWorker {
 
-    public void connect(String host, int port) throws Exception {
+	public void connect(String host, int port) throws Exception {
 
-        //创建事件循环组
-        EventLoopGroup group = new NioEventLoopGroup();
+		// 创建事件循环组
+		EventLoopGroup group = new NioEventLoopGroup();
 
-        try {
+		try {
 
-            //创建引导程序
-            Bootstrap b = new Bootstrap();
-            //设置消息循环
-            b.group(group);
-            //设置通道
-            b.channel(NioSocketChannel.class);
-            //配置通道参数：tcp不延迟
-            b.option(ChannelOption.TCP_NODELAY, true);
-            //设置通道处理
-            b.handler(new ChannelHandler());
-            //发起异步链接，等待输入参数
-            
-            ChannelFuture f = b.connect(host, port).sync();
-            // 等待客户端链路关闭
-            f.channel().closeFuture().sync();
-//            BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-//            while (true) {
-//                channel.writeAndFlush(in.readLine() + "\r\n");
-//            }
+			// 创建引导程序
+			Bootstrap b = new Bootstrap();
+			// 设置消息循环
+			b.group(group);
+			// 设置通道
+			b.channel(NioSocketChannel.class);
+			// 配置通道参数：tcp不延迟
+			b.option(ChannelOption.TCP_NODELAY, true);
+			// 设置通道处理
+			b.handler(new ChannelHandler());
+			// 发起异步链接，等待输入参数
 
-        } finally {
-            //关闭
-            group.shutdownGracefully();
-        }
+			ChannelFuture f = b.connect(host, port).sync();
+			// 等待客户端链路关闭
+			f.channel().closeFuture().sync();
+			// BufferedReader in = new BufferedReader(new
+			// InputStreamReader(System.in));
+			// while (true) {
+			// channel.writeAndFlush(in.readLine() + "\r\n");
+			// }
 
-    }
-    
-    public static void main(String[] args) {
-    	NettyWorker nettyClient = new NettyWorker();
-    	try {
-    		for (int i = 0; i < SystemConstants.WorkerCount; i++) {
-    			nettyClient.connect("127.0.0.1", 8099);
-    		}
+		} finally {
+			// 关闭
+			group.shutdownGracefully();
+		}
+
+	}
+
+	public static void main(String[] args) {
+		NettyWorker nettyClient = new NettyWorker();
+		try {
+			nettyClient.connect("127.0.0.1", 8099);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

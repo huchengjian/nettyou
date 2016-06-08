@@ -95,6 +95,7 @@ public class ClientDemoHandler extends ChannelHandlerAdapter {
         
         String body = new String(req, "UTF-8");
         System.out.println(output + "" + body);
+        logger.info("Finish Task!");
         ctx.close();
         
 //        int sum_1 = 0;
