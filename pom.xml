@@ -21,16 +21,16 @@
             <version>4.11</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
+       <!--  <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>1.6.6</version>
-        </dependency>
+        </dependency> -->
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>1.6.6</version>
-        </dependency>
+    		<groupId>ch.qos.logback</groupId>
+   			<artifactId>logback-classic</artifactId>
+    		<version>1.0.13</version>
+		</dependency>
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
@@ -52,8 +52,24 @@
                     <source>1.8</source>
                     <target>1.8</target>
                     <encoding>UTF-8</encoding>
+                    <compilerArguments>
+                        <extdirs>lib</extdirs>
+                    </compilerArguments>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <mainClass>com.hisign.netty.server.NettyServer</mainClass>
+                        </manifest>
+                    </archive>
                 </configuration>
             </plugin>
         </plugins>
+
     </build>
 </project>

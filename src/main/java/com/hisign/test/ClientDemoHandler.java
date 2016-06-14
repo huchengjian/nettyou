@@ -58,7 +58,7 @@ public class ClientDemoHandler extends ChannelHandlerAdapter {
         
         JSONObject jo = new JSONObject();
         jo.put(Message.MessageType, 1);
-        jo.put(Message.DATA, "111111");
+        jo.put(Message.DATA, "{\"verify1\": \"fdsafsa\", \"verify2\": \"123242\", \"type1\": 1, \"type2\": 2}");
         
         firstMessage.writeBytes(jo.toJSONString().getBytes());
         ctx.writeAndFlush(firstMessage);

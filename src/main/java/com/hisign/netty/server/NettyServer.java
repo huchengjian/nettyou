@@ -5,9 +5,11 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
@@ -15,7 +17,12 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 
+import com.hisign.netty.worker.NettyWorlerClientHandler;
+
+
 public class NettyServer {
+	
+	static private Logger logger = LoggerFactory.getLogger(NettyWorlerClientHandler.class);
 	
 	public String name = "hello";
 	
@@ -28,9 +35,8 @@ public class NettyServer {
 	}
 	
     public void bind(int port) throws Exception {
-    	
-    	System.out.println("----------------启动服务器----------------");
-    	
+
+    	logger.info("----------------启动服务器----------------");
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         try {
@@ -68,7 +74,8 @@ public class NettyServer {
     }
 
     public static void main(String[] args) throws Exception {
-    	
+
+
         int port = 8099;
         if (args != null && args.length > 0) {
             try {

@@ -4,8 +4,8 @@ import io.netty.channel.ChannelHandlerContext;
 
 public class Connection {
 	
-	public ChannelHandlerContext channelHandlerContext;
-	public String msg;
+	private ChannelHandlerContext channelHandlerContext;
+	private String msg;
 	
 	Connection(ChannelHandlerContext channelHandlerContext, String msg){
 		this.channelHandlerContext = channelHandlerContext;
@@ -19,5 +19,25 @@ public class Connection {
 		result = msg.hashCode();
 		
 		return result;
+	}
+
+
+	public ChannelHandlerContext getChannelHandlerContext() {
+		return channelHandlerContext;
+	}
+
+
+	public void setChannelHandlerContext(ChannelHandlerContext channelHandlerContext) {
+		this.channelHandlerContext = channelHandlerContext;
+	}
+
+
+	public String getMsg() {
+		return msg;
+	}
+
+
+	public void setMsg(String msg) {
+		this.msg = msg;
 	}
 }

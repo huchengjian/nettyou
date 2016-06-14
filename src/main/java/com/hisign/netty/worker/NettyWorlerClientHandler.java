@@ -2,6 +2,8 @@ package com.hisign.netty.worker;
 
 import com.alibaba.fastjson.JSON;
 import com.hisign.netty.server.Connection;
+import com.hisign.util.SystemUtil;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerAdapter;
@@ -97,7 +99,7 @@ public class NettyWorlerClientHandler extends ChannelHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         logger.info(ctx.channel().remoteAddress() + "：" + msg);
         
-        System.out.println("worker channelRead..");
+        logger.info("worker channelRead..");
         
         ByteBuf buf = (ByteBuf) msg;
         byte[] req = new byte[buf.readableBytes()];
@@ -105,6 +107,7 @@ public class NettyWorlerClientHandler extends ChannelHandlerAdapter {
         
         String body = new String(req, "UTF-8");
         JSONObject jo = JSON.parseObject(body);
+        logger.info("" + body);
         
         int status = (int)jo.get(Message.Status);
         if (status < 0) {
@@ -112,29 +115,45 @@ public class NettyWorlerClientHandler extends ChannelHandlerAdapter {
         	ctx.close();
 		}
         
-        JSONObject conn = (JSONObject) jo.get(Message.DATA);
+        JSONObject connData = JSONObject.parseObject(jo.getString(Message.DATA));
+        float score = 0;
+//        score = compute(connData);
+
         int connId = (int) jo.get(Message.ConnId);
-
-        System.out.println("" + body);
-
-        compute();
-
         JSONObject result = new JSONObject();
         result.put(Message.MessageType, 3);
-        result.put(Message.DATA, conn);
+        result.put(Message.DATA, connData);
         result.put(Message.ConnId, connId);
+        result.put(Message.Score, score);
 
         byte[] data = result.toJSONString().getBytes();
         ByteBuf bb = Unpooled.buffer(1024);
         bb.writeBytes(data);
         ctx.writeAndFlush(bb);
     }
+    
+    private void taskProcess() {
 
-    public void compute(){
-        int sum_1 = 0;
-        for (int i = 0; i < 10000; i++) {
-            sum_1 += i;
+	}
+
+    public float compute(JSONObject data){
+    	
+    	String  verify1 = data.getString("verify1");
+    	String  verify2 = data.getString("verify2");
+    	int  type1 = data.getIntValue("type1");
+    	int  type2 = data.getIntValue("type2");
+    	
+    	byte[] temp1= null, temp2 = null;
+    	if (type1 == 1) {
+    		//图片格式
+			temp1 = HisignBVESDK.getTemplateByImageByteArray(SystemUtil.HexString2Bytes(verify1));
         }
+    	if (type2 == 1) {
+    		//图片格式
+			temp2 = HisignBVESDK.getTemplateByImageByteArray(SystemUtil.HexString2Bytes(verify2));
+        }
+    	
+    	return HisignBVESDK.compareFromTwoTemplate(temp1, temp2);
     }
 
     /**
