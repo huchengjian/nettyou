@@ -18,7 +18,7 @@ public class Worker {
 			while (true) {
 				if (workerCount.get() >= SystemConstants.MaxWorker) {
 					//以后可改成通知机制，而非睡眠
-					Thread.sleep(200);
+					Thread.sleep(20);
 					continue;
 				}
 

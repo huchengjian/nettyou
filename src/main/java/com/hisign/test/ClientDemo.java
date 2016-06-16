@@ -1,13 +1,11 @@
 package com.hisign.test;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import java.io.BufferedReader;
 
 /**
  * 客户端类.
@@ -47,7 +45,7 @@ public class ClientDemo {
     }
     
     public static void main(String[] args) {
-        ClientDemo nettyClient = new ClientDemo();
+//        ClientDemo nettyClient = new ClientDemo();
 
         int count = 0;
 
@@ -65,11 +63,10 @@ public class ClientDemo {
                                 e.printStackTrace();
                             }
                         }
-
                     }).start();
                 }
                 count ++;
-                if (count >= 3){
+                if (count >= 1){
                     break;
                 }
             }

@@ -36,18 +36,14 @@ public class NettyServerHandler extends ChannelHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg)
             throws Exception {
     	
-        System.out.println("server channelRead..");
-        
         ByteBuf buf = (ByteBuf) msg;
         byte[] req = new byte[buf.readableBytes()];
         buf.readBytes(req);
         String body = new String(req, "UTF-8");
         System.out.println("Receive Message: " + body);
-        JSONObject jo = JSONObject.parseObject(body);
         
-        logger.info(jo.getString("DATA"));
-        Connection connection = new Connection(ctx, jo.getString(Message.DATA));
-        messageProcess(body, connection, ctx);
+        Connection connection = new Connection(ctx, body);
+        messageProcess(connection, ctx);
         
         
 //        System.out.println("The time server receive order:" + body);
@@ -63,16 +59,17 @@ public class NettyServerHandler extends ChannelHandlerAdapter {
      * @param connection current connection
      * @param ctx
      */
-    private void messageProcess(String message, Connection connection, ChannelHandlerContext ctx){
+    private void messageProcess(Connection connection, ChannelHandlerContext ctx){
     	
     	logger.info("messageProcess");
+    	String message = connection.getMsg();
     	
-    	JSONObject js = JSON.parseObject(message);
-    	int type = (int) js.get(Message.MessageType);
+    	JSONObject para = JSON.parseObject(message);
+    	int type = (int) para.get(Message.MessageType);
     	
     	switch (type) {
 		case 1:
-			//外部请求, 放入队列,后期需要增加容错机制.
+			//外部请求, 放入队列
 			server.allConnChannelQueue.add(connection);
 			logger.info("新增任务，任务数:"+ server.allConnChannelQueue.size());
 			break;
@@ -80,19 +77,24 @@ public class NettyServerHandler extends ChannelHandlerAdapter {
 			//worker 请求
 			Connection task = server.allConnChannelQueue.poll();
 			logger.info("worker消费任务, 任务数:"+ server.allConnChannelQueue.size());
-			JSONObject jo = new JSONObject();
+			
+			JSONObject taskJson = JSON.parseObject(task.getMsg());
+			String taskData = taskJson.getString(Message.DATA);
+			
+			JSONObject resultJson = new JSONObject();
 			if(task != null){
+				//后期需要增加容错机制，consumingChannel为正在处理中的任务，需要对任务长期执行出错的处理
 				server.consumingChannel.put(String.valueOf(task.hashCode()), task);
-				jo.put(Message.MessageType, 2);
-				jo.put(Message.DATA, task.getMsg());
-				jo.put(Message.ConnId, task.hashCode());
-				jo.put(Message.Status, 0);
+				resultJson.put(Message.MessageType, 2);
+				resultJson.put(Message.DATA, taskData);
+				resultJson.put(Message.ConnId, task.hashCode());
+				resultJson.put(Message.Status, 0);
 			}
 			else{
-				jo.put(Message.Status, -1);
+				resultJson.put(Message.Status, -1);
 			}
         	
-        	byte[] data = jo.toJSONString().getBytes();
+        	byte[] data = resultJson.toJSONString().getBytes();
         	ByteBuf bb = Unpooled.buffer(1024);
         	bb.writeBytes(data);
         	ctx.writeAndFlush(bb);
@@ -100,15 +102,23 @@ public class NettyServerHandler extends ChannelHandlerAdapter {
 		case 3:
 			//worker完成任务，返回数据
 			logger.info("完成任务");
-			JSONObject para = JSON.parseObject(message);
-//	        String conn = (String) para.get("Data");
-	        int connId = (int) para.get(Message.ConnId);
+	        int connId = para.getInteger(Message.ConnId);
+	        int status = para.getInteger(Message.Status);
 	        
-	        Connection conn = server.consumingChannel.get(String.valueOf(connId));
+	        JSONObject result = new JSONObject();
+	        if(status == 0){
+	        	float score = para.getFloat(Message.Score);
+	        	result.put(Message.Status, 0);
+	        	result.put(Message.Score, score);
+	        }
+	        else {
+	        	result.put(Message.Status, -1);
+			}
 	        
-	        byte[] re = para.toJSONString().getBytes();
+	        byte[] re = result.toJSONString().getBytes();
 	        ByteBuf bb3 = Unpooled.buffer(1024);
 	        bb3.writeBytes(re);
+	        Connection conn = server.consumingChannel.get(String.valueOf(connId));
 	        conn.getChannelHandlerContext().writeAndFlush(bb3);
 			ctx.close();
 			break;
