@@ -16,6 +16,8 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.LineBasedFrameDecoder;
+import io.netty.handler.codec.string.StringDecoder;
 
 import com.hisign.netty.worker.NettyWorlerClientHandler;
 
@@ -52,7 +54,6 @@ public class NettyServer {
             // 等待服务端监听端口关闭
             f.channel().closeFuture().sync();
         } finally {
-            // 优雅退出，释放线程池资源
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
         }
@@ -69,6 +70,8 @@ public class NettyServer {
         @Override
         protected void initChannel(SocketChannel sc) throws Exception {
             System.out.println("server initChannel..");
+            sc.pipeline().addLast(new LineBasedFrameDecoder(1024*10000));
+//            sc.pipeline().addLast(new StringDecoder());
             sc.pipeline().addLast(new NettyServerHandler(server));
         }
     }
@@ -76,7 +79,7 @@ public class NettyServer {
     public static void main(String[] args) throws Exception {
 
 
-        int port = 8099;
+        int port = 8088;
         if (args != null && args.length > 0) {
             try {
                 port = Integer.valueOf(args[0]);

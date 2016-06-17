@@ -6,13 +6,15 @@ import org.slf4j.LoggerFactory;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.hisign.bean.Message;
+import com.hisign.util.SystemUtil;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 
-public class NettyServerHandler extends ChannelHandlerAdapter {
+public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 	
 	private NettyServer server;
 	
@@ -38,9 +40,11 @@ public class NettyServerHandler extends ChannelHandlerAdapter {
     	
         ByteBuf buf = (ByteBuf) msg;
         byte[] req = new byte[buf.readableBytes()];
+        System.out.println(buf.readableBytes());
         buf.readBytes(req);
+       
         String body = new String(req, "UTF-8");
-        System.out.println("Receive Message: " + body);
+        System.out.println("Receive Message: ");
         
         Connection connection = new Connection(ctx, body);
         messageProcess(connection, ctx);
@@ -65,7 +69,7 @@ public class NettyServerHandler extends ChannelHandlerAdapter {
     	String message = connection.getMsg();
     	
     	JSONObject para = JSON.parseObject(message);
-    	int type = (int) para.get(Message.MessageType);
+    	int type = para.getInteger(Message.MessageType);
     	
     	switch (type) {
 		case 1:
@@ -94,7 +98,7 @@ public class NettyServerHandler extends ChannelHandlerAdapter {
 				resultJson.put(Message.Status, -1);
 			}
         	
-        	byte[] data = resultJson.toJSONString().getBytes();
+        	byte[] data = SystemUtil.addNewLine(resultJson.toJSONString()).getBytes();
         	ByteBuf bb = Unpooled.buffer(1024);
         	bb.writeBytes(data);
         	ctx.writeAndFlush(bb);

@@ -1,17 +1,12 @@
 package com.hisign.netty.worker;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-
-import com.hisign.constants.SystemConstants;
 
 /**
  * 客户端类.
@@ -56,7 +51,7 @@ public class NettyWorker {
 	public static void main(String[] args) {
 		NettyWorker nettyClient = new NettyWorker();
 		try {
-			nettyClient.connect("127.0.0.1", 8099);
+			nettyClient.connect("127.0.0.1", 8088);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

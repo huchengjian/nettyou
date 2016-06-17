@@ -26,7 +26,6 @@ public class Worker {
 				System.out.println("新建任务,workerCount: " + workerCount.get());
 
 				new Thread(new Runnable() {
-					@Override
 					public void run() {
 						NettyWorker nettyClient = new NettyWorker();
 						try {

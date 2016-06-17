@@ -8,6 +8,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 
 import org.slf4j.Logger;
@@ -21,7 +22,7 @@ import java.net.SocketAddress;
 /**
  * 客户端处理类.
  */
-public class NettyWorlerClientHandler extends ChannelHandlerAdapter {
+public class NettyWorlerClientHandler extends ChannelInboundHandlerAdapter  {
 	
 	private ByteBuf firstMessage;
 	
@@ -33,20 +34,20 @@ public class NettyWorlerClientHandler extends ChannelHandlerAdapter {
 
     static private Logger logger = LoggerFactory.getLogger(NettyWorlerClientHandler.class);
 
-    /**
-     * 连接通道.
-     *
-     * @param ctx
-     * @param remoteAddress
-     * @param localAddress
-     * @param promise
-     * @throws Exception
-     */
-    @Override
-    public void connect(ChannelHandlerContext ctx, SocketAddress remoteAddress, SocketAddress localAddress, ChannelPromise promise) throws Exception {
-        logger.info(remoteAddress + "：连接通道");
-        super.connect(ctx, remoteAddress, localAddress, promise);
-    }
+//    /**
+//     * 连接通道.
+//     *
+//     * @param ctx
+//     * @param remoteAddress
+//     * @param localAddress
+//     * @param promise
+//     * @throws Exception
+//     */
+//    @Override
+//    public void connect(ChannelHandlerContext ctx, SocketAddress remoteAddress, SocketAddress localAddress, ChannelPromise promise) throws Exception {
+//        logger.info(remoteAddress + "：连接通道");
+//        super.connect(ctx, remoteAddress, localAddress, promise);
+//    }
 
     /**
      * 活跃通道.
@@ -66,7 +67,7 @@ public class NettyWorlerClientHandler extends ChannelHandlerAdapter {
         jo.put(Message.MessageType, 2);
         jo.put(Message.DATA, "222222");
         
-        firstMessage.writeBytes(jo.toJSONString().getBytes());
+        firstMessage.writeBytes(SystemUtil.addNewLine(jo.toJSONString()).getBytes());
         ctx.writeAndFlush(firstMessage);
     }
     
@@ -102,14 +103,15 @@ public class NettyWorlerClientHandler extends ChannelHandlerAdapter {
         logger.info("worker channelRead..");
         
         ByteBuf buf = (ByteBuf) msg;
+        System.out.println(buf.readableBytes());
         byte[] req = new byte[buf.readableBytes()];
         buf.readBytes(req);
         
         String body = new String(req, "UTF-8");
         JSONObject jo = JSON.parseObject(body);
-        logger.info("" + body);
+        logger.info("Receivr　mess");
         
-        int status = (int)jo.get(Message.Status);
+        int status = jo.getInteger(Message.Status);
         if (status < 0) {
         	logger.info("Worker 收到消息错误");
         	ctx.close();
@@ -117,16 +119,16 @@ public class NettyWorlerClientHandler extends ChannelHandlerAdapter {
         
         JSONObject connData = JSONObject.parseObject(jo.getString(Message.DATA));
         float score = 0;
-//        score = compute(connData);
+        score = compute(connData);
 
-        int connId = (int) jo.get(Message.ConnId);
+        int connId = jo.getInteger(Message.ConnId);
         JSONObject result = new JSONObject();
         result.put(Message.MessageType, 3);
         result.put(Message.ConnId, connId);
         result.put(Message.Score, score);
         result.put(Message.Status, 0);
 
-        byte[] data = result.toJSONString().getBytes();
+        byte[] data = SystemUtil.addNewLine(result.toJSONString()).getBytes();
         ByteBuf bb = Unpooled.buffer(1024);
         bb.writeBytes(data);
         ctx.writeAndFlush(bb);
@@ -134,18 +136,20 @@ public class NettyWorlerClientHandler extends ChannelHandlerAdapter {
     
     public float compute(JSONObject data){
     	
-    	String  verify1 = data.getString("verify1");
-    	String  verify2 = data.getString("verify2");
-    	int  type1 = data.getIntValue("type1");
-    	int  type2 = data.getIntValue("type2");
+    	logger.info("compute similarity!");
+    	
+    	String  verify1 = data.getString(Message.Verify1);
+    	String  verify2 = data.getString(Message.Verify2);
+    	int  type1 = data.getIntValue(Message.Type1);
+    	int  type2 = data.getIntValue(Message.Type2);
     	
     	byte[] temp1= null, temp2 = null;
     	if (type1 == 1) {
-    		//图片格式
+    		//图片數據
 			temp1 = HisignBVESDK.getTemplateByImageByteArray(SystemUtil.HexString2Bytes(verify1));
         }
     	if (type2 == 1) {
-    		//图片格式
+    		//图片數據
 			temp2 = HisignBVESDK.getTemplateByImageByteArray(SystemUtil.HexString2Bytes(verify2));
         }
     	
@@ -164,19 +168,19 @@ public class NettyWorlerClientHandler extends ChannelHandlerAdapter {
         System.out.println("ReadComplete");
     }
 
-    /**
-     * 关闭通道.
-     *
-     * @param ctx
-     * @param promise
-     * @throws Exception
-     */
-    @Override
-    public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
-    	System.out.println("close current worker channel");
-    	Worker.workerCount.getAndDecrement();
-        super.close(ctx, promise);
-    }
+//    /**
+//     * 关闭通道.
+//     *
+//     * @param ctx
+//     * @param promise
+//     * @throws Exception
+//     */
+//    @Override
+//    public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
+//    	System.out.println("close current worker channel");
+//    	Worker.workerCount.getAndDecrement();
+//        super.close(ctx, promise);
+//    }
 
     /**
      * 异常处理.

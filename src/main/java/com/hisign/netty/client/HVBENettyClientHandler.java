@@ -4,6 +4,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 
 import org.slf4j.Logger;
@@ -17,30 +18,35 @@ import java.net.SocketAddress;
 /**
  * 客户端处理类.
  */
-public class HVBENettyClientHandler extends ChannelHandlerAdapter {
+public class HVBENettyClientHandler extends ChannelInboundHandlerAdapter {
 	
 	
 	public String output = "----CLientDemo---";
 	
-	public HVBENettyClientHandler(String para, String resultStr) {
+	private String requestJson;
+	private String resultStr;
+	
+	public HVBENettyClientHandler(String requestJson, String resultStr) {
+		this.requestJson=requestJson;
+		this.resultStr=resultStr;
 	}
 
     static private Logger logger = LoggerFactory.getLogger(HVBENettyClientHandler.class);
 
-    /**
-     * 连接通道.
-     *
-     * @param ctx
-     * @param remoteAddress
-     * @param localAddress
-     * @param promise
-     * @throws Exception
-     */
-    @Override
-    public void connect(ChannelHandlerContext ctx, SocketAddress remoteAddress, SocketAddress localAddress, ChannelPromise promise) throws Exception {
-        logger.info(output + remoteAddress + "：连接通道");
-        super.connect(ctx, remoteAddress, localAddress, promise);
-    }
+//    /**
+//     * 连接通道.
+//     *
+//     * @param ctx
+//     * @param remoteAddress
+//     * @param localAddress
+//     * @param promise
+//     * @throws Exception
+//     */
+//    @Override
+//    public void connect(ChannelHandlerContext ctx, SocketAddress remoteAddress, SocketAddress localAddress, ChannelPromise promise) throws Exception {
+//        logger.info(output + remoteAddress + "：连接通道");
+//        super.connect(ctx, remoteAddress, localAddress, promise);
+//    }
 
     /**
      * 活跃通道.
@@ -54,13 +60,13 @@ public class HVBENettyClientHandler extends ChannelHandlerAdapter {
 //        super.channelActive(ctx);
         
         ByteBuf firstMessage;
-        firstMessage = Unpooled.buffer(1024);
+        firstMessage = Unpooled.buffer(2048);
         
-        JSONObject jo = new JSONObject();
-        jo.put(Message.MessageType, 1);
-        jo.put(Message.DATA, "{\"verify1\": \"fdsafsa\", \"verify2\": \"123242\", \"type1\": 1, \"type2\": 2}");
-        
-        firstMessage.writeBytes(jo.toJSONString().getBytes());
+//        JSONObject jo = new JSONObject();
+//        jo.put(Message.MessageType, 1);
+//        jo.put(Message.DATA, "{\"verify1\": \"fdsafsa\", \"verify2\": \"123242\", \"type1\": 1, \"type2\": 2}");
+        requestJson+="\n";
+        firstMessage.writeBytes(requestJson.getBytes());
         ctx.writeAndFlush(firstMessage);
     }
 
@@ -95,6 +101,9 @@ public class HVBENettyClientHandler extends ChannelHandlerAdapter {
         
         String body = new String(req, "UTF-8");
         System.out.println(output + "" + body);
+        
+        resultStr = body;
+        
         logger.info("Finish Task!");
         ctx.close();
         
@@ -117,17 +126,17 @@ public class HVBENettyClientHandler extends ChannelHandlerAdapter {
         System.out.println("ReadComplete");
     }
 
-    /**
-     * 关闭通道.
-     *
-     * @param ctx
-     * @param promise
-     * @throws Exception
-     */
-    @Override
-    public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
-        super.close(ctx, promise);
-    }
+//    /**
+//     * 关闭通道.
+//     *
+//     * @param ctx
+//     * @param promise
+//     * @throws Exception
+//     */
+//    @Override
+//    public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
+//        super.close(ctx, promise);
+//    }
 
     /**
      * 异常处理.

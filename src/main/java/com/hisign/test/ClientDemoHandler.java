@@ -4,6 +4,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 
 import org.slf4j.Logger;
@@ -17,7 +18,7 @@ import java.net.SocketAddress;
 /**
  * 客户端处理类.
  */
-public class ClientDemoHandler extends ChannelHandlerAdapter {
+public class ClientDemoHandler extends ChannelInboundHandlerAdapter  {
 	
 	
 	public String output = "----CLientDemo---";
@@ -27,20 +28,20 @@ public class ClientDemoHandler extends ChannelHandlerAdapter {
 
     static private Logger logger = LoggerFactory.getLogger(ClientDemoHandler.class);
 
-    /**
-     * 连接通道.
-     *
-     * @param ctx
-     * @param remoteAddress
-     * @param localAddress
-     * @param promise
-     * @throws Exception
-     */
-    @Override
-    public void connect(ChannelHandlerContext ctx, SocketAddress remoteAddress, SocketAddress localAddress, ChannelPromise promise) throws Exception {
-        logger.info(output + remoteAddress + "：连接通道");
-        super.connect(ctx, remoteAddress, localAddress, promise);
-    }
+//    /**
+//     * 连接通道.
+//     *
+//     * @param ctx
+//     * @param remoteAddress
+//     * @param localAddress
+//     * @param promise
+//     * @throws Exception
+//     */
+//    @Override
+//    public void connect(ChannelHandlerContext ctx, SocketAddress remoteAddress, SocketAddress localAddress, ChannelPromise promise) throws Exception {
+//        logger.info(output + remoteAddress + "：连接通道");
+//        super.connect(ctx, remoteAddress, localAddress, promise);
+//    }
 
     /**
      * 活跃通道.
@@ -97,12 +98,6 @@ public class ClientDemoHandler extends ChannelHandlerAdapter {
         System.out.println(output + "" + body);
         logger.info("Finish Task!");
         ctx.close();
-        
-//        int sum_1 = 0;
-//        for (int i = 0; i < 100; i++) {
-//			sum_1 += i;
-//		}
-//        ctx.channel().writeAndFlush("client test");
     }
 
     /**
@@ -117,17 +112,17 @@ public class ClientDemoHandler extends ChannelHandlerAdapter {
         System.out.println("ReadComplete");
     }
 
-    /**
-     * 关闭通道.
-     *
-     * @param ctx
-     * @param promise
-     * @throws Exception
-     */
-    @Override
-    public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
-        super.close(ctx, promise);
-    }
+//    /**
+//     * 关闭通道.
+//     *
+//     * @param ctx
+//     * @param promise
+//     * @throws Exception
+//     */
+//    @Override
+//    public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
+//        super.close(ctx, promise);
+//    }
 
     /**
      * 异常处理.

@@ -1,5 +1,6 @@
 package com.hisign.netty.client;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,7 +16,10 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.hisign.bean.Message;
+import com.hisign.constants.SystemConstants;
+import com.hisign.netty.worker.HisignBVESDK;
 import com.hisign.test.ClentDemoChannelHandler;
+import com.hisign.util.SystemUtil;
 
 /**
  * Created by hugo on 6/14/16.
@@ -23,16 +27,17 @@ import com.hisign.test.ClentDemoChannelHandler;
 public class HVBENettyClient {
 
     private String host;
-    private String port;
+    private int port;
     
     private JSONObject requestJson;
     private String resultStr;
     
-    public HVBENettyClient(String host, String port){
+    public HVBENettyClient(String host, int port){
     	this.host = host;
     	this.port = port;
     	requestJson = new JSONObject();
     }
+    
     
     public void setRequestParameter(Map<String, Object> para){
     	String paraStr = JSON.toJSONString(para); 
@@ -41,14 +46,26 @@ public class HVBENettyClient {
     	requestJson.put(Message.DATA, paraStr);
     }
     
-    public static void main(String[] args) {
-    	HVBENettyClient sClient = new HVBENettyClient("", "");
+    public static void main(String[] args) throws Exception {
+    	System.out.println("client send");
+    	HVBENettyClient sClient = new HVBENettyClient("localhost", SystemConstants.port);
     	Map<String, Object> para = new HashMap<String, Object>();
-    	para.put("a", "012302103021030210312");
-    	para.put("aa", "fdsaf");
-    	para.put("aaa", 12);
+    	
+    	String fileName1 = "F:\\1.jpg";
+    	String fileName2 = "F:\\2.jpg";
+    	
+    	byte[] i1 = HisignBVESDK.readFile(new File(fileName1));
+		byte[] i2 = HisignBVESDK.readFile(new File(fileName2));
+    	
+    	para.put(Message.Verify1, SystemUtil.bytesToHexString(i1));
+    	para.put(Message.Verify2, SystemUtil.bytesToHexString(i2));
+    	para.put(Message.Type1, 1);
+    	para.put(Message.Type2, 1);
     	sClient.setRequestParameter(para);
-    	System.out.println(sClient.requestJson.toJSONString());
+//    	System.out.println(sClient.requestJson.toJSONString());
+    	
+    	sClient.connect();
+    	
 	}
 
     public JSONObject compareTwoFace(){
@@ -58,7 +75,7 @@ public class HVBENettyClient {
         return jo;
     }
     
-    public void connect(String host, int port) throws Exception {
+    public void connect() throws Exception {
 
         //创建事件循环组
         EventLoopGroup group = new NioEventLoopGroup();
@@ -90,9 +107,5 @@ public class HVBENettyClient {
             //关闭
             group.shutdownGracefully();
         }
-
     }
-
-
-
 }

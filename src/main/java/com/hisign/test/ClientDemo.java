@@ -54,7 +54,6 @@ public class ClientDemo {
                 for (int i = 0; i<10; i++){
                     System.out.println("new conn");
                     new Thread(new Runnable(){
-                        @Override
                         public void run() {
                             ClientDemo nettyClient = new ClientDemo();
                             try {

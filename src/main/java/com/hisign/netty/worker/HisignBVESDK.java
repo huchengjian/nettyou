@@ -43,8 +43,10 @@ public class HisignBVESDK {
 	
 	public static float compareFromTwoTemplate(byte[] temp1, byte[] temp2){
 		
+		System.out.println("init value:" +THIDFaceSDK.init(null, null, null));
+		
 		float score = (float) 0.0; 
-		int init = THIDFaceSDK.init(null, null, null);
+//		int init = THIDFaceSDK.init(null, null, null);
 		
 		score = THIDFaceSDK.verify(temp1, temp2);
 		return score;
@@ -65,6 +67,8 @@ public class HisignBVESDK {
 	 */
 	public static byte[] getTemplateByImageByteArray(byte[] img) {
 		
+		System.out.println("init value:" +THIDFaceSDK.init(null, null, null));
+		
 		GrayImg grayimg = new GrayImg();
 		grayimg = THIDFaceSDK.readJPG(img);
 		
@@ -74,19 +78,19 @@ public class HisignBVESDK {
 		//获取脸部数据
 		List<FacePos> facePoses = new ArrayList<FacePos>();
         int detect = THIDFaceSDK.detect(grayimg, null, null, 1, facePoses);
-//        System.out.println("detect返回值：" + detect);
+        System.out.println("detect返回值：" + detect);
         EyePos eyepos = new EyePos();
         int locate = 0;
         if (facePoses.size() > 0) {
         	locate = THIDFaceSDK.locate(grayimg, facePoses.get(0).rect, eyepos);
         }
-//        System.out.println("locate返回值：" + locate);
+        System.out.println("locate返回值：" + locate);
         Point[] points = new Point[88];
         int align = 0;
         if (facePoses.size() > 0 && eyepos.left != null & eyepos.right != null) {
            align = THIDFaceSDK.align(grayimg, eyepos, points);
         }
-//        System.out.println("align返回值：" + align);
+        System.out.println("align返回值：" + align);
         
         //获取模板数据
         if (facePoses.size() > 0 && eyepos.left != null && eyepos.right != null) {
