@@ -16,7 +16,9 @@ import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSONObject;
 import com.hisign.bean.Message;
+import com.hisign.constants.SystemConstants;
 
+import java.io.UnsupportedEncodingException;
 import java.net.SocketAddress;
 
 /**
@@ -134,7 +136,7 @@ public class NettyWorlerClientHandler extends ChannelInboundHandlerAdapter  {
         ctx.writeAndFlush(bb);
     }
     
-    public float compute(JSONObject data){
+    public float compute(JSONObject data) throws UnsupportedEncodingException{
     	
     	logger.info("compute similarity!");
     	
@@ -146,11 +148,11 @@ public class NettyWorlerClientHandler extends ChannelInboundHandlerAdapter  {
     	byte[] temp1= null, temp2 = null;
     	if (type1 == 1) {
     		//图片數據
-			temp1 = HisignBVESDK.getTemplateByImageByteArray(SystemUtil.HexString2Bytes(verify1));
+			temp1 = HisignBVESDK.getTemplateByImageByteArray(verify1.getBytes(SystemConstants.ENCODED));
         }
     	if (type2 == 1) {
     		//图片數據
-			temp2 = HisignBVESDK.getTemplateByImageByteArray(SystemUtil.HexString2Bytes(verify2));
+			temp2 = HisignBVESDK.getTemplateByImageByteArray(verify2.getBytes(SystemConstants.ENCODED));
         }
     	
     	return HisignBVESDK.compareFromTwoTemplate(temp1, temp2);

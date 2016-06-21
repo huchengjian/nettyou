@@ -5,6 +5,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import com.hisign.constants.SystemConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +18,6 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.LineBasedFrameDecoder;
-import io.netty.handler.codec.string.StringDecoder;
 
 import com.hisign.netty.worker.NettyWorlerClientHandler;
 
@@ -79,7 +79,7 @@ public class NettyServer {
     public static void main(String[] args) throws Exception {
 
 
-        int port = 8088;
+        int port = SystemConstants.port;
         if (args != null && args.length > 0) {
             try {
                 port = Integer.valueOf(args[0]);

@@ -1,5 +1,6 @@
 package com.hisign.netty.worker;
 
+import com.hisign.constants.SystemConstants;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
@@ -51,7 +52,7 @@ public class NettyWorker {
 	public static void main(String[] args) {
 		NettyWorker nettyClient = new NettyWorker();
 		try {
-			nettyClient.connect("127.0.0.1", 8088);
+			nettyClient.connect("127.0.0.1", SystemConstants.port);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

@@ -10,7 +10,6 @@ import com.hisign.util.SystemUtil;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
@@ -48,7 +47,6 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
         
         Connection connection = new Connection(ctx, body);
         messageProcess(connection, ctx);
-        
         
 //        System.out.println("The time server receive order:" + body);
 //        String currentTime = "QUERY TIME ORDER".equalsIgnoreCase(body) ? new Date(
