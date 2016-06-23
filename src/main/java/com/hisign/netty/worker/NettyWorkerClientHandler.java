@@ -24,17 +24,17 @@ import java.net.SocketAddress;
 /**
  * 客户端处理类.
  */
-public class NettyWorlerClientHandler extends ChannelInboundHandlerAdapter  {
+public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 	
 	private ByteBuf firstMessage;
 	
-	public NettyWorlerClientHandler() {
+	public NettyWorkerClientHandler() {
 		byte[] req = "Hello hugo".getBytes();
         firstMessage = Unpooled.buffer(req.length);
         firstMessage.writeBytes(req);
 	}
 
-    static private Logger logger = LoggerFactory.getLogger(NettyWorlerClientHandler.class);
+    static private Logger logger = LoggerFactory.getLogger(NettyWorkerClientHandler.class);
 
 //    /**
 //     * 连接通道.
@@ -115,13 +115,14 @@ public class NettyWorlerClientHandler extends ChannelInboundHandlerAdapter  {
         
         int status = jo.getInteger(Message.Status);
         if (status < 0) {
-        	logger.info("Worker 收到消息错误");
+        	logger.info("Worker 收到消息错误:"+jo.getString(Message.Message));
         	ctx.close();
+        	return;
 		}
         
         JSONObject connData = JSONObject.parseObject(jo.getString(Message.DATA));
-        float score = 0;
-        score = compute(connData);
+        float score = (float) 0.98;
+//        score = compute(connData);
 
         int connId = jo.getInteger(Message.ConnId);
         JSONObject result = new JSONObject();
