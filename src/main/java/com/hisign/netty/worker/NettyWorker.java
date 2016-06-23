@@ -46,13 +46,12 @@ public class NettyWorker {
 			// 关闭
 			group.shutdownGracefully();
 		}
-
 	}
 
 	public static void main(String[] args) {
 		NettyWorker nettyClient = new NettyWorker();
 		try {
-			nettyClient.connect("127.0.0.1", SystemConstants.port);
+			nettyClient.connect("127.0.0.1", SystemConstants.NettyServerPort);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

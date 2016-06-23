@@ -1,5 +1,7 @@
 package com.hisign.test;
 
+import com.hisign.constants.SystemConstants;
+
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
@@ -57,7 +59,7 @@ public class ClientDemo {
                         public void run() {
                             ClientDemo nettyClient = new ClientDemo();
                             try {
-                                nettyClient.connect("127.0.0.1", 8099);
+                                nettyClient.connect("127.0.0.1", SystemConstants.NettyServerPort);
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
@@ -65,7 +67,7 @@ public class ClientDemo {
                     }).start();
                 }
                 count ++;
-                if (count >= 1){
+                if (count >= 10){
                     break;
                 }
             }
