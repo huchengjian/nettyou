@@ -22,7 +22,7 @@ public class ChannelHandler extends ChannelInitializer<SocketChannel> {
 //        pipeline.addLast(new StringDecoder());
 //        pipeline.addLast(new StringEncoder());
     	socketChannel.pipeline().addLast(new LineBasedFrameDecoder(1024*10000));
-        socketChannel.pipeline().addLast(new NettyWorlerClientHandler());
+        socketChannel.pipeline().addLast(new NettyWorkerClientHandler());
 
     }
 }

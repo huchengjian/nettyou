@@ -80,11 +80,11 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 			Connection task = server.allConnChannelQueue.poll();
 			logger.info("worker消费任务, 任务数:"+ server.allConnChannelQueue.size());
 			
-			JSONObject taskJson = JSON.parseObject(task.getMsg());
-			String taskData = taskJson.getString(Message.DATA);
-			
 			JSONObject resultJson = new JSONObject();
+			
 			if(task != null){
+				JSONObject taskJson = JSON.parseObject(task.getMsg());
+				String taskData = taskJson.getString(Message.DATA);
 				//后期需要增加容错机制，consumingChannel为正在处理中的任务，需要对任务长期执行出错的处理
 				server.consumingChannel.put(String.valueOf(task.hashCode()), task);
 				resultJson.put(Message.MessageType, 2);
@@ -94,6 +94,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 			}
 			else{
 				resultJson.put(Message.Status, -1);
+				resultJson.put(Message.Message, "no task now");
 			}
         	
         	byte[] data = SystemUtil.addNewLine(resultJson.toJSONString()).getBytes();

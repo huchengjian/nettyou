@@ -19,12 +19,9 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.LineBasedFrameDecoder;
 
-import com.hisign.netty.worker.NettyWorlerClientHandler;
-
-
 public class NettyServer {
 	
-	static private Logger logger = LoggerFactory.getLogger(NettyWorlerClientHandler.class);
+	static private Logger logger = LoggerFactory.getLogger(NettyServer.class);
 	
 	public String name = "hello";
 	
