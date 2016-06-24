@@ -23,8 +23,6 @@ public class NettyServer {
 	
 	static private Logger logger = LoggerFactory.getLogger(NettyServer.class);
 	
-	public String name = "hello";
-	
 	public Map<String, Connection> consumingChannel;
 	public Queue<Connection> allConnChannelQueue;
 	

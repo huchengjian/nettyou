@@ -6,5 +6,8 @@ public class SystemConstants {
 	public static int NettyServerPort = 8088;
 	
 	public static String ENCODED = "ISO-8859-1";
+	public static String TOKEN = "HISIGN_API_TOKEN";
+	
+	
 	
 }
