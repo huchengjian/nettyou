@@ -12,6 +12,8 @@ import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSONObject;
 import com.hisign.bean.Message;
+import com.hisign.netty.service.RequestService;
+import com.hisign.util.SystemUtil;
 
 import java.net.SocketAddress;
 
@@ -60,8 +62,10 @@ public class ClientDemoHandler extends ChannelInboundHandlerAdapter  {
         JSONObject jo = new JSONObject();
         jo.put(Message.MessageType, 1);
         jo.put(Message.DATA, "{\"verify1\": \"fdsafsa\", \"verify2\": \"123242\", \"type1\": 1, \"type2\": 2}");
+        RequestService.addValidateFields(jo);
+        logger.info(jo.toJSONString());
         
-        firstMessage.writeBytes(jo.toJSONString().getBytes());
+        firstMessage.writeBytes(SystemUtil.addNewLine(jo.toJSONString()).getBytes());
         ctx.writeAndFlush(firstMessage);
     }
 

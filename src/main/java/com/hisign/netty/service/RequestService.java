@@ -12,8 +12,12 @@ import com.hisign.util.SHA1;
 
 public class RequestService {
 	
-	public static void addValidateFields(JSONObject jo){
-		System.out.println(System.currentTimeMillis());
+	
+	/**
+	 * 没有synchronized会导致数据出错，后期可考虑优化
+	 * @param jo
+	 */
+	public synchronized static void addValidateFields(JSONObject jo){
 		
 		long timeStamp = System.currentTimeMillis();
 		int nonce = new Random().nextInt(10000);

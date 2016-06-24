@@ -126,6 +126,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
         result.put(Message.ConnId, connId);
         result.put(Message.Score, score);
         result.put(Message.Status, 0);
+        RequestService.addValidateFields(result);
 
         byte[] data = SystemUtil.addNewLine(result.toJSONString()).getBytes();
         ByteBuf bb = Unpooled.buffer(1024);

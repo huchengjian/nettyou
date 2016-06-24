@@ -54,7 +54,6 @@ public class ClientDemo {
         try {
             while(true){
                 for (int i = 0; i<10; i++){
-                    System.out.println("new conn");
                     new Thread(new Runnable(){
                         public void run() {
                             ClientDemo nettyClient = new ClientDemo();
@@ -67,7 +66,7 @@ public class ClientDemo {
                     }).start();
                 }
                 count ++;
-                if (count >= 10){
+                if (count >= 1){
                     break;
                 }
             }
