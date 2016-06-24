@@ -2,6 +2,7 @@ package com.hisign.netty.worker;
 
 import com.alibaba.fastjson.JSON;
 import com.hisign.netty.server.Connection;
+import com.hisign.netty.service.RequestService;
 import com.hisign.util.SystemUtil;
 
 import io.netty.buffer.ByteBuf;
@@ -26,12 +27,8 @@ import java.net.SocketAddress;
  */
 public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 	
-	private ByteBuf firstMessage;
 	
 	public NettyWorkerClientHandler() {
-		byte[] req = "Hello hugo".getBytes();
-        firstMessage = Unpooled.buffer(req.length);
-        firstMessage.writeBytes(req);
 	}
 
     static private Logger logger = LoggerFactory.getLogger(NettyWorkerClientHandler.class);
@@ -67,7 +64,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
         
         JSONObject jo = new JSONObject();
         jo.put(Message.MessageType, 2);
-        jo.put(Message.DATA, "222222");
+        RequestService.addValidateFields(jo);
         
         firstMessage.writeBytes(SystemUtil.addNewLine(jo.toJSONString()).getBytes());
         ctx.writeAndFlush(firstMessage);
@@ -105,17 +102,16 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
         logger.info("worker channelRead..");
         
         ByteBuf buf = (ByteBuf) msg;
-        System.out.println(buf.readableBytes());
+//        System.out.println(buf.readableBytes());
         byte[] req = new byte[buf.readableBytes()];
         buf.readBytes(req);
         
         String body = new String(req, "UTF-8");
         JSONObject jo = JSON.parseObject(body);
-        logger.info("Receivr　mess");
         
         int status = jo.getInteger(Message.Status);
         if (status < 0) {
-        	logger.info("Worker 收到消息错误:"+jo.getString(Message.Message));
+        	logger.info("Worker 收到消息错误:"+body);
         	ctx.close();
         	return;
 		}

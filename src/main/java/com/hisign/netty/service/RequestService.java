@@ -1,4 +1,4 @@
-package com.hisign.netty.request;
+package com.hisign.netty.service;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,6 +33,8 @@ public class RequestService {
         
         String sig = SHA1.getDigestOfString(list.toString().getBytes());
         jo.put(Message.Signature, sig);
+        jo.put(Message.Nonce, nonce);
+        jo.put(Message.Timestamp, timeStamp);
 	}
 	
 	public static void main(String[] args) {

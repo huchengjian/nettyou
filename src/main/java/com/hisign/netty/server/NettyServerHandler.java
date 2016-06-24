@@ -1,12 +1,20 @@
 package com.hisign.netty.server;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.hisign.bean.Message;
+import com.hisign.constants.Status;
+import com.hisign.constants.SystemConstants;
+import com.hisign.util.SHA1;
 import com.hisign.util.SystemUtil;
+import com.sun.org.apache.bcel.internal.generic.RETURN;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -43,21 +51,82 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
         buf.readBytes(req);
        
         String body = new String(req, "UTF-8");
-        System.out.println("Receive Message: ");
+        System.out.println("Master Server Receive Message.");
+        
+        if (!validate(body, ctx)) {
+			return;
+		}
         
         Connection connection = new Connection(ctx, body);
         messageProcess(connection, ctx);
         
-//        System.out.println("The time server receive order:" + body);
 //        String currentTime = "QUERY TIME ORDER".equalsIgnoreCase(body) ? new Date(
 //                System.currentTimeMillis()).toString() : "BAD ORDER";
 //        ByteBuf resp = Unpooled.copiedBuffer(currentTime.getBytes());
 //        ctx.write(resp);
     }
     
+    private boolean validate(String messBody, ChannelHandlerContext ctx){
+    	JSONObject para = JSON.parseObject(messBody);
+        boolean isValidatedPara = validateParameter(para);
+        if (!isValidatedPara) {
+        	logger.info("Parameter error. Return back to client.");
+        	returnStandardMessageToClient(Status.ParaError, Status.ParaErrorMessg, null, ctx);
+        	return false;
+		}
+        
+        String timestamp = para.getString(Message.Timestamp);
+    	String nonce = para.getString(Message.Nonce);
+    	String signature = para.getString(Message.Signature);
+        boolean isValidateIdentity = validateIdentity(timestamp, nonce, SystemConstants.TOKEN, signature);
+        
+        if (!isValidateIdentity) {
+        	logger.info("ValidateIdentity error. Return back to client.");
+        	returnStandardMessageToClient(Status.IdentityCheckError, Status.IdentityCheckErrorMessg, null, ctx);
+        	return false;
+		}
+        return true;
+    }
+    
     /**
-     * 
-     * @param message 
+     * 验证参数是否存在
+     * @param para json格式的输入
+     * @return
+     */
+    private boolean validateParameter(JSONObject para){
+    	
+    	Integer type = para.getInteger(Message.MessageType);
+    	String timestamp = para.getString(Message.Timestamp);
+    	String nonce = para.getString(Message.Nonce);
+    	String signature = para.getString(Message.Signature);
+    	
+    	if (type == null || timestamp == null || nonce == null || signature == null) {
+    		return false;
+		}
+    	return true;
+    }
+    
+    
+    private boolean validateIdentity(String timestamp, String nonce, String token, String signature){
+    	
+    	List<String> list = new ArrayList<String>(3) {  
+            private static final long serialVersionUID = 2621444383666420433L;  
+            public String toString() {  
+                return this.get(0) + this.get(1) + this.get(2);  
+            }  
+        };
+        
+        list.add(token);  
+        list.add(timestamp);  
+        list.add(nonce);  
+        Collections.sort(list);
+        
+        String localSign = SHA1.getDigestOfString(list.toString().getBytes());
+    	
+    	return localSign.equals(signature) ? true:false;
+    }
+    
+    /**
      * @param connection current connection
      * @param ctx
      */
@@ -65,8 +134,8 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
     	
     	logger.info("messageProcess");
     	String message = connection.getMsg();
-    	
     	JSONObject para = JSON.parseObject(message);
+    	
     	int type = para.getInteger(Message.MessageType);
     	
     	switch (type) {
@@ -76,7 +145,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 			logger.info("新增任务，任务数:"+ server.allConnChannelQueue.size());
 			break;
 		case 2:
-			//worker 请求
+			//worker请求
 			Connection task = server.allConnChannelQueue.poll();
 			logger.info("worker消费任务, 任务数:"+ server.allConnChannelQueue.size());
 			
@@ -94,7 +163,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 			}
 			else{
 				resultJson.put(Message.Status, -1);
-				resultJson.put(Message.Message, "no task now");
+				resultJson.put(Message.StatusMessage, "no task now");
 			}
         	
         	byte[] data = SystemUtil.addNewLine(resultJson.toJSONString()).getBytes();
@@ -132,6 +201,33 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 		}
     }
 
+
+	private void returnMessageToClient(String resultMessage, ChannelHandlerContext chx) {
+		resultMessage += "\n";
+		ByteBuf byteBuf = Unpooled.buffer(1024);
+		byteBuf.writeBytes(resultMessage.getBytes());
+		chx.writeAndFlush(byteBuf);
+	}
+
+	private void returnStandardMessageToClient(int status, String messg, String data, ChannelHandlerContext chx){
+    	
+    	JSONObject jo = new JSONObject();
+    	jo.put(Message.Status, status);
+    	jo.put(Message.StatusMessage, messg);
+    	jo.put(Message.DATA, data);
+
+		String result = SystemUtil.addNewLine(jo.toJSONString());
+    	
+    	ByteBuf byteBuf = Unpooled.buffer(1024);
+    	byteBuf.writeBytes(result.getBytes());
+    	chx.writeAndFlush(byteBuf);
+    }
+    
+    public static void main(String[] args) {
+		System.out.println(SHA1.getDigestOfString("huchengjian".getBytes()));
+	}
+    
+
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
         logger.info("server channelReadComplete..");
@@ -143,6 +239,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
             throws Exception {
         System.out.println("server exceptionCaught..");
         System.out.println(cause.getMessage());
+		returnStandardMessageToClient(Status.ServerError, Status.ServerErrorMessg, null, ctx);
         ctx.close();
     }
 }
