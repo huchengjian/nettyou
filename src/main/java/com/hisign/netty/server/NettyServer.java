@@ -79,7 +79,7 @@ public class NettyServer {
             try {
                 port = Integer.valueOf(args[0]);
             } catch (NumberFormatException e) {
-
+                logger.info("port error. use integer value.");
             }
         }
         new NettyServer().bind(port);

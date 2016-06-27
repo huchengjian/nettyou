@@ -9,8 +9,17 @@ public class Worker {
 	public static AtomicInteger workerCount = new AtomicInteger(0);
 
 	public static void main(String[] args) throws InterruptedException {
-		Worker worker = new Worker();
-//		worker.run();
+
+		if (args != null && args.length >= 2) {
+			try {
+				WorkerRunnable.serverPort = Integer.parseInt(args[0]);
+				WorkerRunnable.serverIp = args[1];
+			} catch (NumberFormatException e) {
+				System.out.println("port error. use integer value.");
+			}
+		}
+
+//		Worker worker = new Worker();
 		
 		for(int i = 0; i< SystemConstants.MaxWorker; i++){
 			System.out.println("新建线程：");
@@ -24,7 +33,7 @@ public class Worker {
 			while (true) {
 				if (workerCount.get() >= SystemConstants.MaxWorker) {
 					//以后可改成通知机制，而非睡眠
-					Thread.sleep(200);
+					Thread.sleep(100);
 					continue;
 				}
 
