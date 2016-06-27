@@ -120,13 +120,15 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
         float score = (float) 0.98;
 //        score = compute(connData);
 
-        int connId = jo.getInteger(Message.ConnId);
+        String connId = jo.getString(Message.ConnId);
         JSONObject result = new JSONObject();
         result.put(Message.MessageType, 3);
         result.put(Message.ConnId, connId);
         result.put(Message.Score, score);
         result.put(Message.Status, 0);
         RequestService.addValidateFields(result);
+        
+        logger.info("Worker finish task, result:" + result.toJSONString());
 
         byte[] data = SystemUtil.addNewLine(result.toJSONString()).getBytes();
         ByteBuf bb = Unpooled.buffer(1024);

@@ -154,11 +154,13 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 			if(task != null){
 				JSONObject taskJson = JSON.parseObject(task.getMsg());
 				String taskData = taskJson.getString(Message.DATA);
+				String connId = taskJson.getString(Message.ConnId);
+				
 				//后期需要增加容错机制，consumingChannel为正在处理中的任务，需要对任务长期执行出错的处理
-				server.consumingChannel.put(String.valueOf(task.hashCode()), task);
+				server.consumingChannel.put(connId, task);
 				resultJson.put(Message.MessageType, 2);
 				resultJson.put(Message.DATA, taskData);
-				resultJson.put(Message.ConnId, task.hashCode());
+				resultJson.put(Message.ConnId, connId);
 				resultJson.put(Message.Status, 0);
 			}
 			else{
@@ -174,7 +176,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 		case 3:
 			//worker完成任务，返回数据
 			logger.info("完成任务");
-	        int connId = para.getInteger(Message.ConnId);
+	        String connId = para.getString(Message.ConnId);
 	        int status = para.getInteger(Message.Status);
 	        
 	        JSONObject result = new JSONObject();
@@ -182,6 +184,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 	        	float score = para.getFloat(Message.Score);
 	        	result.put(Message.Status, 0);
 	        	result.put(Message.Score, score);
+	        	result.put(Message.ConnId, connId);
 	        }
 	        else {
 	        	result.put(Message.Status, -1);
@@ -196,7 +199,6 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 			break;
 		default:
 			System.out.println("type error!");
-			
 			break;
 		}
     }
