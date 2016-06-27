@@ -118,6 +118,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
         
         JSONObject connData = JSONObject.parseObject(jo.getString(Message.DATA));
         float score = (float) 0.98;
+//        SystemUtil.temCompute();
 //        score = compute(connData);
 
         String connId = jo.getString(Message.ConnId);
@@ -167,7 +168,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
 //        super.channelReadComplete(ctx);
-        System.out.println("ReadComplete");
+//        System.out.println("ReadComplete");
     }
 
 //    /**

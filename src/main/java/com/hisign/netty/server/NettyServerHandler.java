@@ -154,7 +154,10 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 			if(task != null){
 				JSONObject taskJson = JSON.parseObject(task.getMsg());
 				String taskData = taskJson.getString(Message.DATA);
-				String connId = taskJson.getString(Message.ConnId);
+				String connId = taskJson.containsKey(Message.ConnId) ? 
+						taskJson.getString(Message.ConnId) :
+						String.valueOf(Math.abs(task.hashCode()));
+				
 				
 				//后期需要增加容错机制，consumingChannel为正在处理中的任务，需要对任务长期执行出错的处理
 				server.consumingChannel.put(connId, task);
