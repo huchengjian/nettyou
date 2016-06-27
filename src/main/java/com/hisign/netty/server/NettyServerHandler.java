@@ -186,8 +186,8 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 	        else {
 	        	result.put(Message.Status, -1);
 			}
-	        
-	        byte[] re = result.toJSONString().getBytes();
+	        logger.info("Result:" + SystemUtil.addNewLine(result.toJSONString()));
+	        byte[] re = SystemUtil.addNewLine(result.toJSONString()).getBytes();
 	        ByteBuf bb3 = Unpooled.buffer(1024);
 	        bb3.writeBytes(re);
 	        Connection conn = server.consumingChannel.get(String.valueOf(connId));
@@ -230,16 +230,17 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-        logger.info("server channelReadComplete..");
+//        logger.info("server channelReadComplete..");
         ctx.flush();//刷新后才将数据发出到SocketChannel
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause)
             throws Exception {
-        System.out.println("server exceptionCaught..");
-        System.out.println(cause.getMessage());
-		returnStandardMessageToClient(Status.ServerError, Status.ServerErrorMessg, null, ctx);
-        ctx.close();
+        logger.error("server exceptionCaught..");
+		logger.error(cause.getMessage());
+		returnStandardMessageToClient(Status.ServerError,
+				SystemUtil.addNewLine(Status.ServerErrorMessg), null, ctx);
+//        ctx.close();
     }
 }

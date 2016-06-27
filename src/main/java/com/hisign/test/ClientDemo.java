@@ -76,5 +76,10 @@ public class ClientDemo {
 			e.printStackTrace();
 		}
 	}
+    
+//    public static void main(String[] args) throws Exception {
+//    	ClientDemo nettyClient = new ClientDemo();
+//    	nettyClient.connect("127.0.0.1", SystemConstants.NettyServerPort);
+//	}
 
 }
