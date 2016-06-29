@@ -17,7 +17,7 @@ public class NettyWorker {
 	public void connect(String host, int port) throws Exception {
 
 		// 创建事件循环组
-		EventLoopGroup group = new NioEventLoopGroup();
+		EventLoopGroup group = new NioEventLoopGroup(1);
 
 		try {
 

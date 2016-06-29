@@ -2,10 +2,13 @@ package com.hisign.netty.server;
 
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 
 import com.hisign.constants.SystemConstants;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,16 +29,19 @@ public class NettyServer {
 	public Map<String, Connection> consumingChannel;
 	public Queue<Connection> allConnChannelQueue;
 	
+	public Queue<Connection> waitingQueue;
+	
 	NettyServer(){
 		consumingChannel = new ConcurrentHashMap<String, Connection>();
 		allConnChannelQueue = new ConcurrentLinkedQueue<Connection>();
+		waitingQueue = new ConcurrentLinkedQueue<Connection>();
 	}
 	
     public void bind(int port) throws Exception {
 
     	logger.info("----------------启动服务器----------------");
         EventLoopGroup bossGroup = new NioEventLoopGroup();
-        EventLoopGroup workerGroup = new NioEventLoopGroup();
+        EventLoopGroup workerGroup = new NioEventLoopGroup(10);
         try {
             // 配置服务器的NIO线程租
             ServerBootstrap b = new ServerBootstrap();
@@ -72,7 +78,6 @@ public class NettyServer {
     }
 
     public static void main(String[] args) throws Exception {
-
 
         int port = SystemConstants.NettyServerPort;
         if (args != null && args.length > 0) {

@@ -58,7 +58,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 		}
         
         Connection connection = new Connection(ctx, body);
-        messageProcess(connection, ctx);
+        messageProcess(connection);
         
 //        String currentTime = "QUERY TIME ORDER".equalsIgnoreCase(body) ? new Date(
 //                System.currentTimeMillis()).toString() : "BAD ORDER";
@@ -82,7 +82,8 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
         
         if (!isValidateIdentity) {
         	logger.info("ValidateIdentity error. Return back to client.");
-        	returnStandardMessageToClient(Status.IdentityCheckError, Status.IdentityCheckErrorMessg, null, ctx);
+
+			returnStandardMessageToClient(Status.IdentityCheckError, Status.IdentityCheckErrorMessg, null, ctx);
         	return false;
 		}
         return true;
@@ -120,8 +121,11 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
         list.add(timestamp);  
         list.add(nonce);  
         Collections.sort(list);
-        
-        String localSign = SHA1.getDigestOfString(list.toString().getBytes());
+
+		logger.info("server list:"+list.toString());
+		String localSign = SHA1.sha1(list.toString().getBytes());
+
+		logger.info(timestamp+ " "+nonce + " "+ signature+ " " + localSign);
     	
     	return localSign.equals(signature) ? true:false;
     }
@@ -130,51 +134,26 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
      * @param connection current connection
      * @param ctx
      */
-    private void messageProcess(Connection connection, ChannelHandlerContext ctx){
+    private void messageProcess(Connection currConnection){
     	
-    	logger.info("messageProcess");
-    	String message = connection.getMsg();
+    	String message = currConnection.getMsg();
     	JSONObject para = JSON.parseObject(message);
+    	
+    	ChannelHandlerContext ctx = currConnection.getChannelHandlerContext();
     	
     	int type = para.getInteger(Message.MessageType);
     	
     	switch (type) {
 		case 1:
 			//外部请求, 放入队列
-			server.allConnChannelQueue.add(connection);
+			server.allConnChannelQueue.add(currConnection);
 			logger.info("新增任务，任务数:"+ server.allConnChannelQueue.size());
+			
+			wakeupWaitingWorkIfNeed();
 			break;
 		case 2:
 			//worker请求
-			Connection task = server.allConnChannelQueue.poll();
-			logger.info("worker消费任务, 任务数:"+ server.allConnChannelQueue.size());
-			
-			JSONObject resultJson = new JSONObject();
-			
-			if(task != null){
-				JSONObject taskJson = JSON.parseObject(task.getMsg());
-				String taskData = taskJson.getString(Message.DATA);
-				String connId = taskJson.containsKey(Message.ConnId) ? 
-						taskJson.getString(Message.ConnId) :
-						String.valueOf(Math.abs(task.hashCode()));
-				
-				
-				//后期需要增加容错机制，consumingChannel为正在处理中的任务，需要对任务长期执行出错的处理
-				server.consumingChannel.put(connId, task);
-				resultJson.put(Message.MessageType, 2);
-				resultJson.put(Message.DATA, taskData);
-				resultJson.put(Message.ConnId, connId);
-				resultJson.put(Message.Status, 0);
-			}
-			else{
-				resultJson.put(Message.Status, -1);
-				resultJson.put(Message.StatusMessage, "no task now");
-			}
-        	
-        	byte[] data = SystemUtil.addNewLine(resultJson.toJSONString()).getBytes();
-        	ByteBuf bb = Unpooled.buffer(1024);
-        	bb.writeBytes(data);
-        	ctx.writeAndFlush(bb);
+			processWorkerRequest(currConnection);
 			break;
 		case 3:
 			//worker完成任务，返回数据
@@ -206,6 +185,50 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 		}
     }
 
+    public void wakeupWaitingWorkIfNeed(){
+    	Connection waitWorker = server.waitingQueue.poll();
+    	
+    	if (waitWorker != null) {
+    		logger.info("wakeup worker.");
+    		processWorkerRequest(waitWorker);
+		}
+    }
+    
+	public void processWorkerRequest(Connection workerConn) {
+
+		Connection task = server.allConnChannelQueue.poll();
+
+		JSONObject resultJson = new JSONObject();
+
+		if (task != null) {
+			logger.info("worker消费任务, 任务数:" + server.allConnChannelQueue.size());
+			JSONObject taskJson = JSON.parseObject(task.getMsg());
+			String taskData = taskJson.getString(Message.DATA);
+			String connId = taskJson.containsKey(Message.ConnId) ? taskJson
+					.getString(Message.ConnId) : String.valueOf(Math.abs(task
+					.hashCode()));
+
+			// 后期需要增加容错机制，consumingChannel为正在处理中的任务，需要对任务长期执行出错的处理
+			server.consumingChannel.put(connId, task);
+			resultJson.put(Message.MessageType, 2);
+			resultJson.put(Message.DATA, taskData);
+			resultJson.put(Message.ConnId, connId);
+			resultJson.put(Message.Status, 0);
+		} else {
+			server.waitingQueue.add(workerConn);
+			resultJson.put(Message.Status, -1);
+			resultJson.put(Message.StatusMessage, "no task now");
+			return;
+		}
+
+		ChannelHandlerContext ctx = workerConn.getChannelHandlerContext();
+
+		byte[] data = SystemUtil.addNewLine(resultJson.toJSONString())
+				.getBytes();
+		ByteBuf bb = Unpooled.buffer(1024);
+		bb.writeBytes(data);
+		ctx.writeAndFlush(bb);
+	}
 
 	private void returnMessageToClient(String resultMessage, ChannelHandlerContext chx) {
 		resultMessage += "\n";
@@ -229,7 +252,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
     }
     
     public static void main(String[] args) {
-		System.out.println(SHA1.getDigestOfString("huchengjian".getBytes()));
+		System.out.println(SHA1.sha1("huchengjian".getBytes()));
 	}
     
 

@@ -1,5 +1,10 @@
 package com.hisign.util;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
+import sun.util.logging.resources.logging;
+
 public class SHA1 {
     private static final int[] abcde = { 0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0 };
     // 摘要数据存储数组
@@ -195,8 +200,26 @@ public class SHA1 {
     }
     
     // 计算sha-1摘要，返回相应的十六进制字符串
-    public static String getDigestOfString(byte[] byteData) {
-        return byteArrayToHexString(getDigestOfBytes(byteData));
+//    public static String getDigestOfString(byte[] byteData) {
+//        return byteArrayToHexString(getDigestOfBytes(byteData));
+//    }
+
+    public static String sha1(byte[] input) {
+//    	System.out.println("sha star" + System.currentTimeMillis());
+        MessageDigest mDigest = null;
+		try {
+			mDigest = MessageDigest.getInstance("SHA1");
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        byte[] result = mDigest.digest(input);
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0; i < result.length; i++) {
+            sb.append(Integer.toString((result[i] & 0xff) + 0x100, 16).substring(1));
+        }
+//        System.out.println("sha over" + System.currentTimeMillis());
+        return sb.toString();
     }
     
     public static void main(String[] args) {
