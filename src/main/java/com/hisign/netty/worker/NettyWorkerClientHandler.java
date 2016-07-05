@@ -27,6 +27,7 @@ import java.net.SocketAddress;
  */
 public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 	
+	boolean isFirstReq = true;
 	
 	public NettyWorkerClientHandler() {
 	}
@@ -59,22 +60,21 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
         logger.info(ctx.channel().remoteAddress() + "：通道激活");
 //        super.channelActive(ctx);
         
-        ByteBuf firstMessage;
-        firstMessage = Unpooled.buffer(1024);
+        ByteBuf request;
+        request = Unpooled.buffer(1024);
         
         JSONObject jo = new JSONObject();
         jo.put(Message.MessageType, 2);
         RequestService.addValidateFields(jo);
         
-        firstMessage.writeBytes(SystemUtil.addNewLine(jo.toJSONString()).getBytes());
-        ctx.writeAndFlush(firstMessage);
+        if (isFirstReq) {
+        	request.writeBytes(getHeader());
+		}
+        request.writeBytes(SystemUtil.addNewLine(jo.toJSONString()).getBytes());
+        ctx.writeAndFlush(request);
+        isFirstReq = false;
     }
     
-    private void jobRequest() {
-    	
-	}
-    
-
     /**
      * 非活跃通道.
      *
@@ -195,5 +195,9 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         logger.info("异常信息：" + cause.getMessage());
+    }
+
+    private byte[] getHeader() {
+        return (SystemConstants.MAGIC + SystemConstants.CURRENT_VERSION).getBytes();
     }
 }

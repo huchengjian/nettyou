@@ -2,12 +2,11 @@ package com.hisign.netty.server;
 
 import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.LinkedBlockingDeque;
 
 import com.hisign.constants.SystemConstants;
+import com.hisign.decoder.ValidateDecoder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +42,7 @@ public class NettyServer {
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup(10);
         try {
-            // 配置服务器的NIO线程租
+            // 配置服务器的NIO线程组
             ServerBootstrap b = new ServerBootstrap();
             b.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
@@ -71,6 +70,7 @@ public class NettyServer {
         @Override
         protected void initChannel(SocketChannel sc) throws Exception {
             System.out.println("server initChannel..");
+            sc.pipeline().addLast(new ValidateDecoder());
             sc.pipeline().addLast(new LineBasedFrameDecoder(1024*10000));
 //            sc.pipeline().addLast(new StringDecoder());
             sc.pipeline().addLast(new NettyServerHandler(server));

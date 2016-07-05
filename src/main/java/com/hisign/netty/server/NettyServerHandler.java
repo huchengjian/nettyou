@@ -14,7 +14,6 @@ import com.hisign.constants.Status;
 import com.hisign.constants.SystemConstants;
 import com.hisign.util.SHA1;
 import com.hisign.util.SystemUtil;
-import com.sun.org.apache.bcel.internal.generic.RETURN;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -44,14 +43,15 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg)
             throws Exception {
+		logger.info("nettysever read");
     	
         ByteBuf buf = (ByteBuf) msg;
         byte[] req = new byte[buf.readableBytes()];
-        System.out.println(buf.readableBytes());
+//        System.out.println(buf.readableBytes());
         buf.readBytes(req);
        
         String body = new String(req, "UTF-8");
-        System.out.println("Master Server Receive Message.");
+		logger.info("Master Server Receive Message." + body);
         
         if (!validate(body, ctx)) {
 			return;
