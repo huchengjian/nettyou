@@ -3,6 +3,7 @@ package com.hisign.netty.server;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.DelayQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,11 +24,19 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 	
 	private NettyServer server;
+	private DelayQueue<Connection> timeoutQueue;
+	
+	private Thread timeOutChecker;
 	
     static private Logger logger = LoggerFactory.getLogger(NettyServerHandler.class);
 	
 	NettyServerHandler(NettyServer server){
+		logger.info("Netty server start");
 		this.server = server;
+		
+		timeoutQueue = new DelayQueue<Connection>();
+		timeOutChecker = new Thread(new TimeOutChecker(server, timeoutQueue));
+		timeOutChecker.start();
 	}
 	
 	 /**
@@ -150,6 +159,10 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 			logger.info("新增任务，任务数:"+ server.allConnChannelQueue.size());
 			
 			wakeupWaitingWorkIfNeed();
+			
+			currConnection.setEndTime(System.currentTimeMillis() + 5000);
+			timeoutQueue.add(currConnection);
+			
 			break;
 		case 2:
 			//worker请求
@@ -196,7 +209,19 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
     
 	public void processWorkerRequest(Connection workerConn) {
 
-		Connection task = server.allConnChannelQueue.poll();
+		Connection task = null;
+		while(true){
+			task = server.allConnChannelQueue.poll();
+			if (task == null) {
+				break;
+			}
+			else if (task == null || task.getIsTimeOut()) {
+				logger.info("processWorkerRequest: connection time out." + task.getMsg());
+			}
+			else {
+				break;
+			}
+		}
 
 		JSONObject resultJson = new JSONObject();
 

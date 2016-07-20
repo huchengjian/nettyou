@@ -2,7 +2,7 @@ package com.hisign.constants;
 
 public class SystemConstants {
 	
-	public static int MaxWorker = 24;
+	public static int MaxWorker = 8;
 	public static int NettyServerPort = 8088;
 	public static String NettyServerAddr = "127.0.0.1";
 	
