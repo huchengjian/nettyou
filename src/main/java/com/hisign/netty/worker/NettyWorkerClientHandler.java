@@ -59,20 +59,28 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         logger.info(ctx.channel().remoteAddress() + "：通道激活");
 //        super.channelActive(ctx);
+
+        fetchJobFromMaster(ctx);
         
+        isFirstReq = false;
+    }
+
+    public void fetchJobFromMaster(ChannelHandlerContext ctx){
+
+        logger.info("fetchJobFromMaster");
+
         ByteBuf request;
         request = Unpooled.buffer(1024);
-        
+
         JSONObject jo = new JSONObject();
         jo.put(Message.MessageType, 2);
         RequestService.addValidateFields(jo);
-        
+
         if (isFirstReq) {
-        	request.writeBytes(getHeader());
-		}
+            request.writeBytes(getHeader());
+        }
         request.writeBytes(SystemUtil.addNewLine(jo.toJSONString()).getBytes());
         ctx.writeAndFlush(request);
-        isFirstReq = false;
     }
     
     /**
@@ -135,6 +143,8 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
         ByteBuf bb = Unpooled.buffer(1024);
         bb.writeBytes(data);
         ctx.writeAndFlush(bb);
+
+        fetchJobFromMaster(ctx);
     }
     
     public float compute(JSONObject data) throws UnsupportedEncodingException{

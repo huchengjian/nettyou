@@ -196,7 +196,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 	        bb3.writeBytes(re);
 	        Connection conn = server.consumingChannel.get(String.valueOf(connId));
 	        conn.getChannelHandlerContext().writeAndFlush(bb3);
-			ctx.close();
+//			ctx.close();
 			break;
 		default:
 			System.out.println("type error!");
@@ -223,6 +223,9 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 			}
 			else if (task.getIsTimeOut()) {
 				logger.info("processWorkerRequest: connection time out." + task.getMsg());
+				/**
+				 * todos 超时后是否需要通知client
+				 */
 			}
 			else {
 				break;

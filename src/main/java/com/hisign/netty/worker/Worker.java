@@ -24,17 +24,19 @@ public class Worker {
 				System.out.println("port error. use integer value.");
 			}
 		}
-		
 
 //		Worker worker = new Worker();
 		
 		logger.info("worker start at " + WorkerRunnable.serverIp + ". Thread Count:" + SystemConstants.MaxWorker);
-		for(int i = 0; i< SystemConstants.MaxWorker; i++){
+		for(int i = 0; i < SystemConstants.MaxWorker; i++){
 			new Thread(new WorkerRunnable()).start();
 		}
 		Thread.sleep(2000);
 	}
 
+	/**
+	 * not used
+	 */
 	public void run() {
 		try {
 			while (true) {

@@ -16,9 +16,10 @@ public class TimeOutChecker implements Runnable {
 	}
 
 	public void run() {
+		System.out.println("timeout checkouter start");
 		while(running){
             try {
-                System.out.println("检查ing");
+//                System.out.println("检查ing");
                 Connection conn = timeOutQueue.take();
                 
                 timeOutProcess(conn);
@@ -31,6 +32,6 @@ public class TimeOutChecker implements Runnable {
 	
 	private void timeOutProcess(Connection conn){
 		conn.setIsTimeOut();
-		System.out.println("超时" + conn.getMsg());
+//		System.out.println("超时" + conn.getMsg());
 	}
 }
