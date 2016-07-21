@@ -21,6 +21,10 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
+/**
+ * 每个新连接会产生新的NettyServerHandler，会绑定到对应的NIOEventLoop中的线程
+ * @author hugo
+ */
 public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 	
 	private NettyServer server;
@@ -134,7 +138,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 		logger.info("server list:"+list.toString());
 		String localSign = SHA1.sha1(list.toString().getBytes());
 
-		logger.info(timestamp+ " "+nonce + " "+ signature+ " " + localSign);
+//		logger.info(timestamp+ " "+nonce + " "+ signature+ " " + localSign);
     	
     	return localSign.equals(signature) ? true:false;
     }
@@ -152,6 +156,8 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
     	
     	int type = para.getInteger(Message.MessageType);
     	
+    	currConnection.parseAndSetClientPara();
+    	
     	switch (type) {
 		case 1:
 			//外部请求, 放入队列
@@ -160,7 +166,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 			
 			wakeupWaitingWorkIfNeed();
 			
-			currConnection.setEndTime(System.currentTimeMillis() + 5000);
+//			currConnection.setEndTime(System.currentTimeMillis() + 5000);
 			timeoutQueue.add(currConnection);
 			
 			break;
@@ -215,7 +221,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 			if (task == null) {
 				break;
 			}
-			else if (task == null || task.getIsTimeOut()) {
+			else if (task.getIsTimeOut()) {
 				logger.info("processWorkerRequest: connection time out." + task.getMsg());
 			}
 			else {

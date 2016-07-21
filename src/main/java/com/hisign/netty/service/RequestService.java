@@ -35,8 +35,6 @@ public class RequestService {
         list.add(String.valueOf(nonce));  
         Collections.sort(list);
 
-		System.out.println(Thread.currentThread() + "worker list:"+list.toString());
-        
         String sig = SHA1.sha1(list.toString().getBytes());
         jo.put(Message.Signature, sig);
         jo.put(Message.Nonce, nonce);

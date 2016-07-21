@@ -16,4 +16,6 @@ public class Message {
 	public final static String Timestamp = "Timestamp";
 	public final static String Nonce = "Nonce";
 	public final static String Signature = "Signature";
+	
+	public final static String AliveTime = "AliveTime";
 }

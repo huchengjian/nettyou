@@ -17,11 +17,10 @@ public class WorkerRunnable implements Runnable {
 			try {
 				NettyWorker nettyClient = new NettyWorker();
 				nettyClient.connect(serverIp, serverPort);
-				System.out.println(Thread.currentThread() + "new conn");
 				Thread.sleep(100);
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+//				e.printStackTrace();
+				System.out.println("connection error");
 			}
 		}
 	}

@@ -30,7 +30,7 @@ public class TimeOutChecker implements Runnable {
 	}
 	
 	private void timeOutProcess(Connection conn){
-		conn.setTimeOut();
+		conn.setIsTimeOut();
 		System.out.println("超时" + conn.getMsg());
 	}
 }
