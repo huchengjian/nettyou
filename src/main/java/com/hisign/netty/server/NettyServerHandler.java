@@ -56,15 +56,14 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg)
             throws Exception {
-		logger.info("nettysever read");
-    	
+
         ByteBuf buf = (ByteBuf) msg;
         byte[] req = new byte[buf.readableBytes()];
 //        System.out.println(buf.readableBytes());
         buf.readBytes(req);
        
         String body = new String(req, "UTF-8");
-		logger.info("Master Server Receive Message." + body);
+		logger.info("Master Server Receive Message." + body.substring(0, 20));
         
         if (!validate(body, ctx)) {
 			return;
@@ -135,7 +134,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
         list.add(nonce);  
         Collections.sort(list);
 
-		logger.info("server list:"+list.toString());
+//		logger.info("server list:"+list.toString());
 		String localSign = SHA1.sha1(list.toString().getBytes());
 
 //		logger.info(timestamp+ " "+nonce + " "+ signature+ " " + localSign);

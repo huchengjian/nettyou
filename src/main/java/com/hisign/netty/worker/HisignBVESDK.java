@@ -18,6 +18,10 @@ public class HisignBVESDK {
 	static String fileName1 = "F:\\1.jpg";
 	static String fileName2 = "F:\\2.jpg";
 	
+	static{
+		THIDFaceSDK.init(null, null, null);
+	}
+	
 	public static void main(String[] args) throws IOException {
 		int init = THIDFaceSDK.init(null, null, null);
 		System.out.println(init);
@@ -31,7 +35,7 @@ public class HisignBVESDK {
 	public static float compareFromTwoImages(byte[] img1, byte[] img2){
 		
 		float score = (float) 0.0; 
-		int init = THIDFaceSDK.init(null, null, null);
+//		int init = THIDFaceSDK.init(null, null, null);
 		
         byte[] template1 = getTemplateByImageByteArray(img1);
         byte[] template2 = getTemplateByImageByteArray(img2);
@@ -43,10 +47,9 @@ public class HisignBVESDK {
 	
 	public static float compareFromTwoTemplate(byte[] temp1, byte[] temp2){
 		
-		System.out.println("init value:" +THIDFaceSDK.init(null, null, null));
+//		System.out.println("init value:" +THIDFaceSDK.init(null, null, null));
 		
 		float score = (float) 0.0; 
-//		int init = THIDFaceSDK.init(null, null, null);
 		
 		score = THIDFaceSDK.verify(temp1, temp2);
 		return score;
@@ -67,8 +70,7 @@ public class HisignBVESDK {
 	 */
 	public static byte[] getTemplateByImageByteArray(byte[] img) {
 		
-		System.out.println("init value:" +THIDFaceSDK.init(null, null, null));
-		
+//		System.out.println("init value:" +THIDFaceSDK.init(null, null, null));
 		GrayImg grayimg = new GrayImg();
 		grayimg = THIDFaceSDK.readJPG(img);
 		
@@ -100,6 +102,5 @@ public class HisignBVESDK {
         }
         
         return template;
-
 	}
 }

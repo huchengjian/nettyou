@@ -71,14 +71,15 @@ public class NettyServer {
         protected void initChannel(SocketChannel sc) throws Exception {
             System.out.println("server initChannel..");
             sc.pipeline().addLast(new ValidateDecoder());
-            sc.pipeline().addLast(new LineBasedFrameDecoder(1024*10000));
+            sc.pipeline().addLast(new LineBasedFrameDecoder(1024*1000000));
 //            sc.pipeline().addLast(new StringDecoder());
             sc.pipeline().addLast(new NettyServerHandler(server));
         }
     }
 
     public static void main(String[] args) throws Exception {
-
+    	
+    	System.out.println(System.getProperty("user.dir"));
         int port = SystemConstants.NettyServerPort;
         if (args != null && args.length > 0) {
             try {
