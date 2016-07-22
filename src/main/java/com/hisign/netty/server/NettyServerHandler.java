@@ -63,7 +63,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
         buf.readBytes(req);
        
         String body = new String(req, "UTF-8");
-		logger.info("Master Server Receive Message." + body.substring(0, 20));
+		logger.info("Master Server Receive Message." + body.substring(0, 100));
         
         if (!validate(body, ctx)) {
 			return;
@@ -162,12 +162,13 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 			//外部请求, 放入队列
 			server.allConnChannelQueue.add(currConnection);
 			logger.info("新增任务，任务数:"+ server.allConnChannelQueue.size());
-			
+
 			wakeupWaitingWorkIfNeed();
 			
 //			currConnection.setEndTime(System.currentTimeMillis() + 5000);
 			timeoutQueue.add(currConnection);
-			
+
+
 			break;
 		case 2:
 			//worker请求
@@ -300,6 +301,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
             throws Exception {
         logger.error("server exceptionCaught..");
 		logger.error(cause.getMessage());
+		cause.printStackTrace();
 		returnStandardMessageToClient(Status.ServerError,
 				SystemUtil.addNewLine(Status.ServerErrorMessg), null, ctx);
 //        ctx.close();
