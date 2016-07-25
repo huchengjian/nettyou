@@ -183,7 +183,6 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 //			currConnection.setEndTime(System.currentTimeMillis() + 5000);
 			timeoutQueue.add(currConnection);
 
-
 			break;
 		case 2:
 			//worker请求
@@ -210,6 +209,8 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 	        ByteBuf bb3 = Unpooled.buffer(1024);
 	        bb3.writeBytes(re);
 	        Connection conn = server.consumingChannel.get(String.valueOf(connId));
+	        //todo判断是否超时
+	        
 	        conn.getChannelHandlerContext().writeAndFlush(bb3);
 //			ctx.close();
 			break;

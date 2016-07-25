@@ -20,8 +20,12 @@ public class Worker {
 			try {
 				WorkerRunnable.serverPort = Integer.parseInt(args[0]);
 				WorkerRunnable.serverIp = args[1];
+
+				if (args.length >= 3) {
+					SystemConstants.MaxWorker = Integer.parseInt(args[2]);
+				}
 			} catch (NumberFormatException e) {
-				System.out.println("port error. use integer value.");
+				logger.error("Integer parse error. use integer value.");
 			}
 		}
 
