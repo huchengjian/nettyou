@@ -21,7 +21,8 @@ public class ChannelHandler extends ChannelInitializer<SocketChannel> {
 //        // 字符串解码 和 编码
 //        pipeline.addLast(new StringDecoder());
 //        pipeline.addLast(new StringEncoder());
-    	socketChannel.pipeline().addLast(new LineBasedFrameDecoder(1024*10000));
+    	socketChannel.pipeline().addLast(new LineBasedFrameDecoder(1024*1000000));
+//        socketChannel.pipeline().addLast(new StringDecoder());
         socketChannel.pipeline().addLast(new NettyWorkerClientHandler());
 
     }

@@ -51,10 +51,11 @@ public class ValidateDecoder extends ByteToMessageDecoder {
 				ctx.channel().close();
 				return;
 			}
+			log.info("validate header pass.");
 		}
 		isValidated = true;
 		
-		log.info("validate header pass.");
+		
         byte[] req = new byte[in.readableBytes()];
         in.readBytes(req);
         String body = new String(req, "UTF-8");

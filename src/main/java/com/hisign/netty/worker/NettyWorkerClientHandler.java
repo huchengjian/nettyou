@@ -19,6 +19,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.hisign.bean.Message;
 import com.hisign.constants.SystemConstants;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.SocketAddress;
 
@@ -126,8 +127,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
         
         JSONObject connData = JSONObject.parseObject(jo.getString(Message.DATA));
         float score = (float) 0.98;
-//        SystemUtil.temCompute();
-//        score = compute(connData);
+        score = compute(connData);
 
         String connId = jo.getString(Message.ConnId);
         JSONObject result = new JSONObject();
@@ -156,14 +156,25 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
     	int  type1 = data.getIntValue(Message.Type1);
     	int  type2 = data.getIntValue(Message.Type2);
     	
+    	sun.misc.BASE64Decoder decoder = new  sun.misc.BASE64Decoder();
+    	
+    	byte[] byte1 = null;
+    	byte[] byte2 = null;
+    	try {
+			byte1 = decoder.decodeBuffer(verify1);
+			byte2 = decoder.decodeBuffer(verify2);
+		} catch (IOException e) {
+			logger.error("BASE64Decoder decode error.");
+		}
+    	
     	byte[] temp1= null, temp2 = null;
     	if (type1 == 1) {
     		//图片數據
-			temp1 = HisignBVESDK.getTemplateByImageByteArray(verify1.getBytes(SystemConstants.ENCODED));
+			temp1 = HisignBVESDK.getTemplateByImageByteArray(byte1);
         }
     	if (type2 == 1) {
     		//图片數據
-			temp2 = HisignBVESDK.getTemplateByImageByteArray(verify2.getBytes(SystemConstants.ENCODED));
+			temp2 = HisignBVESDK.getTemplateByImageByteArray(byte2);
         }
     	
     	return HisignBVESDK.compareFromTwoTemplate(temp1, temp2);

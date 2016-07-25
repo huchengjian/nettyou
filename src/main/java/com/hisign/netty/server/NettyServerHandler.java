@@ -59,11 +59,10 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 
         ByteBuf buf = (ByteBuf) msg;
         byte[] req = new byte[buf.readableBytes()];
-//        System.out.println(buf.readableBytes());
         buf.readBytes(req);
        
         String body = new String(req, "UTF-8");
-		logger.info("Master Server Receive Message." + body.substring(0, 100));
+        printMess(body);
         
         if (!validate(body, ctx)) {
 			return;
@@ -77,6 +76,22 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 //        ByteBuf resp = Unpooled.copiedBuffer(currentTime.getBytes());
 //        ctx.write(resp);
     }
+    
+    private void printMess(String body) {
+    	String mess = body.length() > 200 ?
+    			body.substring(0, 200) : body;
+    	
+    	logger.info("Master Server Receive Message." + "fulllength:"+ body.length() + "\n" + mess);
+	}
+    
+    private void testcode(String body) {
+    	JSONObject jb = JSON.parseObject(body);
+    	String dataString = jb.getString(Message.DATA);
+    	
+    	JSONObject dataJson = JSON.parseObject(dataString);
+    	System.out.println(dataJson.getString(Message.Verify1).length());
+    	System.out.println(dataJson.getString(Message.Verify2).length());
+	}
     
     private boolean validate(String messBody, ChannelHandlerContext ctx){
     	JSONObject para = JSON.parseObject(messBody);
@@ -150,7 +165,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
     	
     	String message = currConnection.getMsg();
     	JSONObject para = JSON.parseObject(message);
-    	
+
     	ChannelHandlerContext ctx = currConnection.getChannelHandlerContext();
     	
     	int type = para.getInteger(Message.MessageType);
