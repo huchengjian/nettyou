@@ -20,6 +20,7 @@ import com.hisign.constants.SystemConstants;
 import com.hisign.exception.HisignSDKException;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * 客户端处理类.
@@ -129,7 +130,6 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 			JSONObject connData = JSONObject.parseObject(para
 					.getString(Message.DATA));
 			float score = (float) 0.98;
-
 			score = compute(connData);
 
 			JSONObject result = composeResultToMaster(connId, score);
@@ -144,7 +144,8 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 			sendMessage(getErrorMessage(Status.ComputeError, Status.ComputeErrorMessg, connId), ctx);
 		}
 		catch (Exception e) {
-			System.out.println("other Exception");
+			logger.error("Hisign sdk compute error!");
+			sendMessage(getErrorMessage(Status.ComputeError, Status.ComputeErrorMessg, connId), ctx);
 		}
 		finally{
 			fetchJobFromMaster(ctx);
@@ -178,7 +179,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 		byte1 = decoder.decodeBuffer(verify1);
 		byte2 = decoder.decodeBuffer(verify2);
 
-		byte[] temp1= null, temp2 = null;
+		byte[] temp1 = byte1, temp2 = byte2;
     	if (type1 == 1) {
     		//图片數據
 			temp1 = HisignBVESDK.getTemplateByImageByteArray(byte1);
@@ -188,6 +189,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 			temp2 = HisignBVESDK.getTemplateByImageByteArray(byte2);
         }
     	
+    	logger.info("size of template:"+temp1.length + " "+temp2.length);
     	return HisignBVESDK.compareFromTwoTemplate(temp1, temp2);
     }
     

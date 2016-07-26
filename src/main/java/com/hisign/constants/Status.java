@@ -16,7 +16,7 @@ public class Status {
 	
 	//计算错误
 	public static int ComputeError = -4;
-	public static String ComputeErrorMessg = "计算错误";
+	public static String ComputeErrorMessg = "计算错误, 请检查参数重新请求";
 		
 	
 }
