@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.DelayQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,12 +32,15 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 	private DelayQueue<Connection> timeoutQueue;
 	
 	private Thread timeOutChecker;
+
+	AtomicBoolean isValidate = new AtomicBoolean();
 	
     static private Logger logger = LoggerFactory.getLogger(NettyServerHandler.class);
 	
 	NettyServerHandler(NettyServer server){
 		logger.info("Netty server start");
 		this.server = server;
+		isValidate.set(false);
 		
 		timeoutQueue = new DelayQueue<Connection>();
 		timeOutChecker = new Thread(new TimeOutChecker(server, timeoutQueue));
@@ -62,12 +66,12 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
         buf.readBytes(req);
        
         String body = new String(req, "UTF-8");
-        printMess(body);
-        
-        if (!validate(body, ctx)) {
+
+        if (!isValidate.get() && !validate(body, ctx)) {
 			return;
 		}
-        
+
+        printMess(body);
         Connection connection = new Connection(ctx, body);
         messageProcess(connection);
         
@@ -113,6 +117,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 			returnStandardMessageToClient(Status.IdentityCheckError, Status.IdentityCheckErrorMessg, null, ctx);
         	return false;
 		}
+		isValidate.set(true);
         return true;
     }
     
@@ -202,9 +207,11 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 	        	result.put(Message.ConnId, connId);
 	        }
 	        else {
-	        	result.put(Message.Status, -1);
+	        	result.putAll(para);
+	        	result.put(Message.MessageType, 1);
+	        	System.out.println("result error." + para.toJSONString());
 			}
-	        logger.info("Result:" + SystemUtil.addNewLine(result.toJSONString()));
+//	        logger.info("Result:" + SystemUtil.addNewLine(result.toJSONString()));
 	        byte[] re = SystemUtil.addNewLine(result.toJSONString()).getBytes();
 	        ByteBuf bb3 = Unpooled.buffer(1024);
 	        bb3.writeBytes(re);

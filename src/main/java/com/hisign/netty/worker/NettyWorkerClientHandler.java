@@ -1,7 +1,6 @@
 package com.hisign.netty.worker;
 
 import com.alibaba.fastjson.JSON;
-import com.hisign.netty.server.Connection;
 import com.hisign.netty.service.RequestService;
 import com.hisign.util.SystemUtil;
 
@@ -10,18 +9,17 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.ChannelPromise;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSONObject;
 import com.hisign.bean.Message;
+import com.hisign.constants.Status;
 import com.hisign.constants.SystemConstants;
+import com.hisign.exception.HisignSDKException;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.SocketAddress;
 
 /**
  * 客户端处理类.
@@ -105,52 +103,68 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
      * @throws Exception
      */
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        logger.info(ctx.channel().remoteAddress() + "：" + msg);
-        
-        logger.info("worker channelRead..");
-        
-        ByteBuf buf = (ByteBuf) msg;
-//        System.out.println(buf.readableBytes());
-        byte[] req = new byte[buf.readableBytes()];
-        buf.readBytes(req);
-        
-        String body = new String(req, "UTF-8");
-        JSONObject jo = JSON.parseObject(body);
-        
-        int status = jo.getInteger(Message.Status);
-        if (status < 0) {
-        	logger.info("Worker 收到消息错误:"+body);
-        	ctx.close();
-        	return;
-		}
-        
-        JSONObject connData = JSONObject.parseObject(jo.getString(Message.DATA));
-        float score = (float) 0.98;
-        score = compute(connData);
+	public void channelRead(ChannelHandlerContext ctx, Object msg)
+			throws Exception {
+		logger.info(ctx.channel().remoteAddress() + "：" + msg);
+		logger.info("worker channelRead..");
+		String connId = "";
+		
+		try {
 
-        String connId = jo.getString(Message.ConnId);
+			ByteBuf buf = (ByteBuf) msg;
+			byte[] req = new byte[buf.readableBytes()];
+			buf.readBytes(req);
+
+			String body = new String(req, "UTF-8");
+			JSONObject para = JSON.parseObject(body);
+			connId = para.getString(Message.ConnId);
+
+			int status = para.getInteger(Message.Status);
+			if (status < 0) {
+				logger.info("Worker 收到消息错误:" + body);
+				ctx.close();
+				return;
+			}
+
+			JSONObject connData = JSONObject.parseObject(para
+					.getString(Message.DATA));
+			float score = (float) 0.98;
+
+			score = compute(connData);
+
+			JSONObject result = composeResultToMaster(connId, score);
+			logger.info("Worker finish task, result:" + result.toJSONString());
+			sendMessage(result.toJSONString(), ctx);
+
+		} catch (IOException e) {
+			sendMessage(getErrorMessage(Status.ParaError, Status.ParaErrorMessg, connId), ctx);
+		}
+		catch (HisignSDKException e) {
+			logger.error("Hisign sdk compute error!");
+			sendMessage(getErrorMessage(Status.ComputeError, Status.ComputeErrorMessg, connId), ctx);
+		}
+		catch (Exception e) {
+			System.out.println("other Exception");
+		}
+		finally{
+			fetchJobFromMaster(ctx);
+		}
+	}
+    
+    private JSONObject composeResultToMaster(String connId, double score) {
         JSONObject result = new JSONObject();
         result.put(Message.MessageType, 3);
         result.put(Message.ConnId, connId);
         result.put(Message.Score, score);
         result.put(Message.Status, 0);
         RequestService.addValidateFields(result);
-        
-        logger.info("Worker finish task, result:" + result.toJSONString());
-
-        byte[] data = SystemUtil.addNewLine(result.toJSONString()).getBytes();
-        ByteBuf bb = Unpooled.buffer(1024);
-        bb.writeBytes(data);
-        ctx.writeAndFlush(bb);
-
-        fetchJobFromMaster(ctx);
-    }
+        return result;
+	}
     
-    public float compute(JSONObject data) throws UnsupportedEncodingException{
-    	
+    private float compute(JSONObject data) throws HisignSDKException, IOException{
+
     	logger.info("compute similarity!");
-    	
+
     	String  verify1 = data.getString(Message.Verify1);
     	String  verify2 = data.getString(Message.Verify2);
     	int  type1 = data.getIntValue(Message.Type1);
@@ -158,16 +172,13 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
     	
     	sun.misc.BASE64Decoder decoder = new  sun.misc.BASE64Decoder();
     	
-    	byte[] byte1 = null;
-    	byte[] byte2 = null;
-    	try {
-			byte1 = decoder.decodeBuffer(verify1);
-			byte2 = decoder.decodeBuffer(verify2);
-		} catch (IOException e) {
-			logger.error("BASE64Decoder decode error.");
-		}
-    	
-    	byte[] temp1= null, temp2 = null;
+		byte[] byte1 = null;
+		byte[] byte2 = null;
+
+		byte1 = decoder.decodeBuffer(verify1);
+		byte2 = decoder.decodeBuffer(verify2);
+
+		byte[] temp1= null, temp2 = null;
     	if (type1 == 1) {
     		//图片數據
 			temp1 = HisignBVESDK.getTemplateByImageByteArray(byte1);
@@ -178,6 +189,25 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
         }
     	
     	return HisignBVESDK.compareFromTwoTemplate(temp1, temp2);
+    }
+    
+    private void sendMessage(String resultMessage, ChannelHandlerContext chx) {
+		resultMessage = SystemUtil.addNewLine(resultMessage);
+		ByteBuf byteBuf = Unpooled.buffer(1024);
+		byteBuf.writeBytes(resultMessage.getBytes());
+		chx.writeAndFlush(byteBuf);
+	}
+
+	private String getErrorMessage(int status, String messg, String connId){
+    	
+    	JSONObject jo = new JSONObject();
+    	jo.put(Message.Status, status);
+    	jo.put(Message.StatusMessage, messg);
+		jo.put(Message.ConnId, connId);
+
+		jo.put(Message.MessageType, 3);
+
+		return jo.toJSONString();
     }
 
     /**
