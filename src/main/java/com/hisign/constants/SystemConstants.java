@@ -2,7 +2,7 @@ package com.hisign.constants;
 
 public class SystemConstants {
 	
-	public static int MaxWorker = 8;
+	public static int MaxWorker = 3;
 	public static int NettyServerPort = 8089;
 	public static String NettyServerAddr = "127.0.0.1";
 	
@@ -11,5 +11,8 @@ public class SystemConstants {
 	
 	public static String MAGIC = "HISIGN";
 	public static String CURRENT_VERSION = "1.0";
+	
+	public static int UUIDLength = 32;
+	
 	
 }

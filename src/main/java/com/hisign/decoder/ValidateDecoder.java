@@ -33,6 +33,8 @@ public class ValidateDecoder extends ByteToMessageDecoder {
 
 		ByteBuf byteBuf = Unpooled.buffer(1024);
 		
+		//todos 判断可读字节是否够
+		
 		if(!isValidated){
 			byte[] head = new byte[6];
 			in.readBytes(head);

@@ -3,6 +3,7 @@ package com.hisign.netty.server;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -196,7 +197,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 		case 3:
 			//worker完成任务，返回数据
 			logger.info("完成任务");
-	        String connId = para.getString(Message.ConnId);
+	        String uuid_connId = para.getString(Message.ConnId);
 	        int status = para.getInteger(Message.Status);
 	        
 	        JSONObject result = new JSONObject();
@@ -204,7 +205,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 	        	float score = para.getFloat(Message.Score);
 	        	result.put(Message.Status, 0);
 	        	result.put(Message.Score, score);
-	        	result.put(Message.ConnId, connId);
+	        	result.put(Message.ConnId, decodeConnId(uuid_connId));
 	        }
 	        else {
 	        	result.putAll(para);
@@ -215,11 +216,15 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 	        byte[] re = SystemUtil.addNewLine(result.toJSONString()).getBytes();
 	        ByteBuf bb3 = Unpooled.buffer(1024);
 	        bb3.writeBytes(re);
-	        Connection conn = server.consumingChannel.get(String.valueOf(connId));
-	        //todo判断是否超时
+	        Connection conn = server.consumingChannel.get(String.valueOf(uuid_connId));
 	        
+	        if (conn == null) {
+				logger.error("not found connid in workqueue:" + uuid_connId);
+				return;
+			}
+	        
+	        //todo判断任务是否超时
 	        conn.getChannelHandlerContext().writeAndFlush(bb3);
-//			ctx.close();
 			break;
 		default:
 			System.out.println("type error!");
@@ -266,10 +271,12 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 					.hashCode()));
 
 			// 后期需要增加容错机制，consumingChannel为正在处理中的任务，需要对任务长期执行出错的处理
-			server.consumingChannel.put(connId, task);
+			String uuid_conn_id = encodeConnId(connId);
+			
+			server.consumingChannel.put(uuid_conn_id, task);
 			resultJson.put(Message.MessageType, 2);
 			resultJson.put(Message.DATA, taskData);
-			resultJson.put(Message.ConnId, connId);
+			resultJson.put(Message.ConnId, uuid_conn_id);
 			resultJson.put(Message.Status, 0);
 		} else {
 			server.waitingQueue.add(workerConn);
@@ -285,6 +292,18 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 		ByteBuf bb = Unpooled.buffer(1024);
 		bb.writeBytes(data);
 		ctx.writeAndFlush(bb);
+	}
+	
+	private String encodeConnId(String connid) {
+		UUID randomUuid = UUID.randomUUID();
+		return randomUuid.toString().replace("-", "").concat(connid);
+	}
+	
+	private String decodeConnId(String id) {
+		if (id.length() > SystemConstants.UUIDLength) {
+			return id.substring(SystemConstants.UUIDLength);
+		}
+		return "0";
 	}
 
 	private void returnMessageToClient(String resultMessage, ChannelHandlerContext chx) {

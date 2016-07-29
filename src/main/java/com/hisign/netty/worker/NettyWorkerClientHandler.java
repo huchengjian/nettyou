@@ -117,6 +117,8 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 			buf.readBytes(req);
 
 			String body = new String(req, "UTF-8");
+			logger.info("worker receive message:"+body);
+
 			JSONObject para = JSON.parseObject(body);
 			connId = para.getString(Message.ConnId);
 
