@@ -217,14 +217,16 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 	        ByteBuf bb3 = Unpooled.buffer(1024);
 	        bb3.writeBytes(re);
 	        Connection conn = server.consumingChannel.get(String.valueOf(uuid_connId));
-	        
-	        if (conn == null) {
+			logger.info("consumingChannel size:" + server.consumingChannel.size());
+
+			if (conn == null) {
 				logger.error("not found connid in workqueue:" + uuid_connId);
 				return;
 			}
 	        
 	        //todo判断任务是否超时
 	        conn.getChannelHandlerContext().writeAndFlush(bb3);
+	        server.consumingChannel.remove(uuid_connId);
 			break;
 		default:
 			System.out.println("type error!");

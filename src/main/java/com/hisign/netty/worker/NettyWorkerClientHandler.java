@@ -6,7 +6,6 @@ import com.hisign.util.SystemUtil;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
@@ -20,7 +19,6 @@ import com.hisign.constants.SystemConstants;
 import com.hisign.exception.HisignSDKException;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 /**
  * 客户端处理类.
@@ -117,7 +115,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 			buf.readBytes(req);
 
 			String body = new String(req, "UTF-8");
-			logger.info("worker receive message:"+body);
+			printMess(body);
 
 			JSONObject para = JSON.parseObject(body);
 			connId = para.getString(Message.ConnId);
@@ -152,6 +150,13 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 		finally{
 			fetchJobFromMaster(ctx);
 		}
+	}
+    
+    private void printMess(String body) {
+    	String mess = body.length() > 200 ?
+    			body.substring(0, 200) : body;
+    	
+    	logger.info("Worker Server Receive Message." + "fulllength:"+ body.length() + "\n" + mess);
 	}
     
     private JSONObject composeResultToMaster(String connId, double score) {
