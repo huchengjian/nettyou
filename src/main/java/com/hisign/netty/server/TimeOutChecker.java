@@ -2,14 +2,17 @@ package com.hisign.netty.server;
 
 import java.util.concurrent.DelayQueue;
 
+import com.hisign.bean.ClientRequest;
+import com.hisign.bean.Request;
+
 public class TimeOutChecker implements Runnable {
 	
-	DelayQueue<Connection> timeOutQueue;
+	DelayQueue<Request> timeOutQueue;
 	boolean running;
 	
 	private NettyServer server;
 	
-	public TimeOutChecker(NettyServer server, DelayQueue<Connection> queue){
+	public TimeOutChecker(NettyServer server, DelayQueue<Request> queue){
 		timeOutQueue = queue;
 		running = true;
 		this.server = server;
@@ -20,7 +23,7 @@ public class TimeOutChecker implements Runnable {
 		while(running){
             try {
 //                System.out.println("检查ing");
-                Connection conn = timeOutQueue.take();
+            	Request conn = timeOutQueue.take();
                 
                 timeOutProcess(conn);
             } catch (InterruptedException e) {
@@ -30,8 +33,8 @@ public class TimeOutChecker implements Runnable {
         }
 	}
 	
-	private void timeOutProcess(Connection conn){
-		conn.setIsTimeOut();
+	private void timeOutProcess(Request conn){
 //		System.out.println("超时" + conn.getMsg());
+		conn.setIsTimeOut();
 	}
 }

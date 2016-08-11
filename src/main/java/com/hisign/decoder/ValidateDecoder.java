@@ -36,7 +36,7 @@ public class ValidateDecoder extends ByteToMessageDecoder {
 		//todos 判断可读字节是否够
 		
 		if(!isValidated){
-			byte[] head = new byte[6];
+			byte[] head = new byte[4];
 			in.readBytes(head);
 			if (! new String(head, "utf-8").equals(SystemConstants.MAGIC)) {
 				log.error("Receive Error HEADER:" + new String(head, "utf-8"));
@@ -60,9 +60,8 @@ public class ValidateDecoder extends ByteToMessageDecoder {
 		
         byte[] req = new byte[in.readableBytes()];
         in.readBytes(req);
-        String body = new String(req, "UTF-8");
 
-    	byteBuf.writeBytes(body.getBytes());
+    	byteBuf.writeBytes(req);
     	out.add(byteBuf);
 	}
 	

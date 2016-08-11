@@ -12,7 +12,6 @@ public class MessageProcess {
 		byte[] pa = mess.getBytes();
     	ByteBuf firstMessage = Unpooled.buffer(defaultLength);
 		return firstMessage;
-
 	}
 	
 }

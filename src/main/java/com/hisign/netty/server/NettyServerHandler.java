@@ -3,7 +3,6 @@ package com.hisign.netty.server;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -12,7 +11,11 @@ import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.hisign.bean.ClientRequest;
 import com.hisign.bean.Message;
+import com.hisign.bean.Request;
+import com.hisign.bean.WorkerRequest;
+import com.hisign.bean.WorkerResultRequest;
 import com.hisign.constants.Status;
 import com.hisign.constants.SystemConstants;
 import com.hisign.util.SHA1;
@@ -30,7 +33,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 	
 	private NettyServer server;
-	private DelayQueue<Connection> timeoutQueue;
+	private DelayQueue<Request> timeoutQueue;
 	
 	private Thread timeOutChecker;
 
@@ -43,7 +46,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 		this.server = server;
 		isValidate.set(false);
 		
-		timeoutQueue = new DelayQueue<Connection>();
+		timeoutQueue = new DelayQueue<Request>();
 		timeOutChecker = new Thread(new TimeOutChecker(server, timeoutQueue));
 		timeOutChecker.start();
 	}
@@ -66,20 +69,27 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
         byte[] req = new byte[buf.readableBytes()];
         buf.readBytes(req);
        
-        String body = new String(req, "UTF-8");
-
-        if (!isValidate.get() && !validate(body, ctx)) {
-			return;
-		}
-
-        printMess(body);
-        Connection connection = new Connection(ctx, body);
-        messageProcess(connection);
+		System.out.println(SystemUtil.bytesToHexString(req));
+		
+		Request request = parseMessageType(req);
+		request.para = req;
+//      if (!isValidate.get() && !validate(body, ctx)) {
+//			return;
+//		}
+       
+		request.setChannelHandlerContext(ctx);
+        messageProcess(request);
         
-//        String currentTime = "QUERY TIME ORDER".equalsIgnoreCase(body) ? new Date(
-//                System.currentTimeMillis()).toString() : "BAD ORDER";
 //        ByteBuf resp = Unpooled.copiedBuffer(currentTime.getBytes());
-//        ctx.write(resp);
+    }
+    
+    public Request parseMessageType(byte[] message){
+    	Request request = new Request();
+    	int message_type = SystemUtil.singleByteToInt(message[0]);
+    	
+    	request.message_type = message_type;
+		
+		return request;
     }
     
     private void printMess(String body) {
@@ -167,66 +177,53 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
      * @param connection current connection
      * @param ctx
      */
-    private void messageProcess(Connection currConnection){
-    	
-    	String message = currConnection.getMsg();
-    	JSONObject para = JSON.parseObject(message);
-
-    	ChannelHandlerContext ctx = currConnection.getChannelHandlerContext();
-    	
-    	int type = para.getInteger(Message.MessageType);
-    	
-    	currConnection.parseAndSetClientPara();
+    private void messageProcess(Request request){
+    	int type = request.message_type;
+//    	currConnection.parseAndSetClientPara();
     	
     	switch (type) {
 		case 1:
 			//外部请求, 放入队列
-			server.allConnChannelQueue.add(currConnection);
-			logger.info("新增任务，任务数:"+ server.allConnChannelQueue.size());
+			ClientRequest clientRequest = new ClientRequest();
+			clientRequest.parseParameter(request.para, 1);
+			clientRequest.setChannelHandlerContext(request.getChannelHandlerContext());
+			
+			server.allClientQueue.add(clientRequest);
+			logger.info("新增任务，任务数:"+ server.allClientQueue.size());
 
 			wakeupWaitingWorkIfNeed();
 			
 //			currConnection.setEndTime(System.currentTimeMillis() + 5000);
-			timeoutQueue.add(currConnection);
+			timeoutQueue.add(request);
 
 			break;
 		case 2:
 			//worker请求
-			processWorkerRequest(currConnection);
+			WorkerRequest workerRequest = new WorkerRequest();
+			workerRequest.setChannelHandlerContext(request.getChannelHandlerContext());
+			processWorkerRequest(workerRequest);
 			break;
 		case 3:
 			//worker完成任务，返回数据
 			logger.info("完成任务");
-	        String uuid_connId = para.getString(Message.ConnId);
-	        int status = para.getInteger(Message.Status);
+			WorkerResultRequest workerResultRequest = new WorkerResultRequest();
+			workerResultRequest.parsePara(request.para, 1);
+			
+	        String uuid_connId = workerResultRequest.getUuid_connId();
 	        
-	        JSONObject result = new JSONObject();
-	        if(status == 0){
-	        	float score = para.getFloat(Message.Score);
-	        	result.put(Message.Status, 0);
-	        	result.put(Message.Score, score);
-	        	result.put(Message.ConnId, decodeConnId(uuid_connId));
-	        }
-	        else {
-	        	result.putAll(para);
-	        	result.put(Message.MessageType, 1);
-	        	System.out.println("result error." + para.toJSONString());
-			}
-//	        logger.info("Result:" + SystemUtil.addNewLine(result.toJSONString()));
-	        byte[] re = SystemUtil.addNewLine(result.toJSONString()).getBytes();
-	        ByteBuf bb3 = Unpooled.buffer(1024);
-	        bb3.writeBytes(re);
-	        Connection conn = server.consumingChannel.get(String.valueOf(uuid_connId));
-			logger.info("consumingChannel size:" + server.consumingChannel.size());
-
-			if (conn == null) {
+	        ClientRequest conn = server.consumingChannel.get(String.valueOf(uuid_connId));
+	        
+	        if (conn == null) {
 				logger.error("not found connid in workqueue:" + uuid_connId);
 				return;
 			}
 	        
 	        //todo判断任务是否超时
-	        conn.getChannelHandlerContext().writeAndFlush(bb3);
+	        conn.writeResultToClient(workerResultRequest);
+	        
 	        server.consumingChannel.remove(uuid_connId);
+			logger.info("consumingChannel size:" + server.consumingChannel.size());
+	        
 			break;
 		default:
 			System.out.println("type error!");
@@ -235,7 +232,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
     }
 
     public void wakeupWaitingWorkIfNeed(){
-    	Connection waitWorker = server.waitingQueue.poll();
+    	WorkerRequest waitWorker = server.waitingQueue.poll();
     	
     	if (waitWorker != null) {
     		logger.info("wakeup worker.");
@@ -243,16 +240,17 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 		}
     }
     
-	public void processWorkerRequest(Connection workerConn) {
+	public void processWorkerRequest(WorkerRequest workerConn) {
 
-		Connection task = null;
+		ClientRequest task = null;
+		
 		while(true){
-			task = server.allConnChannelQueue.poll();
+			task = server.allClientQueue.poll();
 			if (task == null) {
 				break;
 			}
 			else if (task.getIsTimeOut()) {
-				logger.info("processWorkerRequest: connection time out." + task.getMsg());
+				logger.info("processWorkerRequest: connection time out." + task.toString());
 				/**
 				 * todos 超时后是否需要通知client
 				 */
@@ -261,52 +259,40 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 				break;
 			}
 		}
-
-		JSONObject resultJson = new JSONObject();
-
+		
+		ByteBuf byteBuf = Unpooled.buffer(1024);
 		if (task != null) {
-			logger.info("worker消费任务, 任务数:" + server.allConnChannelQueue.size());
-			JSONObject taskJson = JSON.parseObject(task.getMsg());
-			String taskData = taskJson.getString(Message.DATA);
-			String connId = taskJson.containsKey(Message.ConnId) ? taskJson
-					.getString(Message.ConnId) : String.valueOf(Math.abs(task
-					.hashCode()));
-
-			// 后期需要增加容错机制，consumingChannel为正在处理中的任务，需要对任务长期执行出错的处理
-			String uuid_conn_id = encodeConnId(connId);
+			logger.info("worker消费任务, 任务数:" + server.allClientQueue.size());
 			
+			workerConn.clientRequest = task;
+			
+			int connId = task.getConn_id();
+			// 后期需要增加容错机制，consumingChannel为正在处理中的任务，需要对任务长期执行出错的处理
+			String uuid_conn_id = SystemUtil.encodeConnId(String.valueOf(connId));
+			workerConn.uuid_connId = uuid_conn_id;
 			server.consumingChannel.put(uuid_conn_id, task);
-			resultJson.put(Message.MessageType, 2);
-			resultJson.put(Message.DATA, taskData);
-			resultJson.put(Message.ConnId, uuid_conn_id);
-			resultJson.put(Message.Status, 0);
+			
+			byteBuf.writeInt(workerConn.getSize());
+			logger.info("size:" + workerConn.getSize());
+			byteBuf.writeByte(2);
+			byteBuf.writeInt(uuid_conn_id.length());
+			byteBuf.writeBytes(uuid_conn_id.getBytes());
+			
+			byteBuf.writeByte(task.getType1());
+			byteBuf.writeByte(task.getType2());
+			byteBuf.writeInt(task.getFace1().length);
+			byteBuf.writeBytes(task.getFace1());
+			byteBuf.writeInt(task.getFace2().length);
+			byteBuf.writeBytes(task.getFace2());
 		} else {
 			server.waitingQueue.add(workerConn);
-			resultJson.put(Message.Status, -1);
-			resultJson.put(Message.StatusMessage, "no task now");
 			return;
 		}
 
 		ChannelHandlerContext ctx = workerConn.getChannelHandlerContext();
-
-		byte[] data = SystemUtil.addNewLine(resultJson.toJSONString())
-				.getBytes();
-		ByteBuf bb = Unpooled.buffer(1024);
-		bb.writeBytes(data);
-		ctx.writeAndFlush(bb);
+		ctx.writeAndFlush(byteBuf);
 	}
 	
-	private String encodeConnId(String connid) {
-		UUID randomUuid = UUID.randomUUID();
-		return randomUuid.toString().replace("-", "").concat(connid);
-	}
-	
-	private String decodeConnId(String id) {
-		if (id.length() > SystemConstants.UUIDLength) {
-			return id.substring(SystemConstants.UUIDLength);
-		}
-		return "0";
-	}
 
 	private void returnMessageToClient(String resultMessage, ChannelHandlerContext chx) {
 		resultMessage += "\n";

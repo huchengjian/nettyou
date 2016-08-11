@@ -5,6 +5,8 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import com.hisign.bean.ClientRequest;
+import com.hisign.bean.WorkerRequest;
 import com.hisign.constants.SystemConstants;
 import com.hisign.decoder.ValidateDecoder;
 
@@ -19,21 +21,22 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LineBasedFrameDecoder;
 
 public class NettyServer {
 	
 	static private Logger logger = LoggerFactory.getLogger(NettyServer.class);
 	
-	public Map<String, Connection> consumingChannel;
-	public Queue<Connection> allConnChannelQueue;
+	public Map<String, ClientRequest> consumingChannel;
+	public Queue<ClientRequest> allClientQueue;
 	
-	public Queue<Connection> waitingQueue;
+	public Queue<WorkerRequest> waitingQueue;
 	
 	NettyServer(){
-		consumingChannel = new ConcurrentHashMap<String, Connection>();
-		allConnChannelQueue = new ConcurrentLinkedQueue<Connection>();
-		waitingQueue = new ConcurrentLinkedQueue<Connection>();
+		consumingChannel = new ConcurrentHashMap<String, ClientRequest>();
+		allClientQueue = new ConcurrentLinkedQueue<ClientRequest>();
+		waitingQueue = new ConcurrentLinkedQueue<WorkerRequest>();
 	}
 	
     public void bind(int port) throws Exception {
@@ -71,7 +74,9 @@ public class NettyServer {
         protected void initChannel(SocketChannel sc) throws Exception {
             System.out.println("server initChannel..");
             sc.pipeline().addLast(new ValidateDecoder());
-            sc.pipeline().addLast(new LineBasedFrameDecoder(1024*1000000));
+//            sc.pipeline().addLast(new LineBasedFrameDecoder(1024*1000000));
+            sc.pipeline().addLast("lengthDecoder", 
+            		new LengthFieldBasedFrameDecoder(20*1024*1024,0,4,0,4));
 //            sc.pipeline().addLast(new StringDecoder());
             sc.pipeline().addLast(new NettyServerHandler(server));
         }

@@ -1,6 +1,22 @@
 package com.hisign.util;
 
+import java.util.UUID;
+
+import com.hisign.constants.SystemConstants;
+
 public class SystemUtil {
+	
+	public static String encodeConnId(String connid) {
+		UUID randomUuid = UUID.randomUUID();
+		return randomUuid.toString().replace("-", "").concat(connid);
+	}
+	
+	public static int decodeConnId(String id) {
+		if (id.length() > SystemConstants.UUIDLength) {
+			return Integer.parseInt(id.substring(SystemConstants.UUIDLength));
+		}
+		return 0;
+	}
 	
 	public static byte bit2byte(String bString) {
 		byte result = 0;
@@ -8,6 +24,30 @@ public class SystemUtil {
 			result += (Byte.parseByte(bString.charAt(i) + "") * Math.pow(2, j));
 		}
 		return result;
+	}
+	
+	public static int fourByteArrayToInt(byte[] b) {  
+	    return   b[3] & 0xFF |  
+	            (b[2] & 0xFF) << 8 |  
+	            (b[1] & 0xFF) << 16 |  
+	            (b[0] & 0xFF) << 24;  
+	}
+
+	public static float fourByte2Float(byte[] b) {
+		int l;
+		int index = 0;
+		l = b[index + 0];
+		l &= 0xff;
+		l |= ((long) b[index + 1] << 8);
+		l &= 0xffff;
+		l |= ((long) b[index + 2] << 16);
+		l &= 0xffffff;
+		l |= ((long) b[index + 3] << 24);
+		return Float.intBitsToFloat(l);
+	}
+
+	public static int singleByteToInt(byte b) {  
+	    return  b;  
 	}
 	
 	private static int parse(char c) {  
