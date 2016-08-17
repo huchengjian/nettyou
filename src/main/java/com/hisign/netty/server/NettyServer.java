@@ -8,7 +8,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import com.hisign.bean.ClientRequest;
 import com.hisign.bean.WorkerRequest;
 import com.hisign.constants.SystemConstants;
+import com.hisign.decoder.MessageDecoder;
 import com.hisign.decoder.ValidateDecoder;
+import com.hisign.hbve.protocol.HBVEMessage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,15 +30,15 @@ public class NettyServer {
 	
 	static private Logger logger = LoggerFactory.getLogger(NettyServer.class);
 	
-	public Map<String, ClientRequest> consumingChannel;
-	public Queue<ClientRequest> allClientQueue;
+	public Map<String, HBVEMessage> consumingChannel;
+	public Queue<HBVEMessage> allClientQueue;
 	
-	public Queue<WorkerRequest> waitingQueue;
+	public Queue<HBVEMessage> waitingQueue;
 	
 	NettyServer(){
-		consumingChannel = new ConcurrentHashMap<String, ClientRequest>();
-		allClientQueue = new ConcurrentLinkedQueue<ClientRequest>();
-		waitingQueue = new ConcurrentLinkedQueue<WorkerRequest>();
+		consumingChannel = new ConcurrentHashMap<String, HBVEMessage>();
+		allClientQueue = new ConcurrentLinkedQueue<HBVEMessage>();
+		waitingQueue = new ConcurrentLinkedQueue<HBVEMessage>();
 	}
 	
     public void bind(int port) throws Exception {
@@ -78,6 +80,7 @@ public class NettyServer {
             sc.pipeline().addLast("lengthDecoder", 
             		new LengthFieldBasedFrameDecoder(20*1024*1024,0,4,0,4));
 //            sc.pipeline().addLast(new StringDecoder());
+            sc.pipeline().addLast(new MessageDecoder());
             sc.pipeline().addLast(new NettyServerHandler(server));
         }
     }

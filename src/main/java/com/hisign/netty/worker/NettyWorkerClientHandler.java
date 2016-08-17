@@ -1,7 +1,10 @@
 package com.hisign.netty.worker;
 
-import com.alibaba.fastjson.JSON;
-import com.hisign.netty.service.RequestService;
+import com.hisign.hbve.protocol.HBVEBinaryProtocol;
+import com.hisign.hbve.protocol.HBVEMessage;
+import com.hisign.hbve.protocol.HBVEMessageType;
+import com.hisign.hbve.protocol.HBVEProcesser;
+import com.hisign.netty.worker.handler.ComputeSimilarityHandler;
 import com.hisign.util.SystemUtil;
 
 import io.netty.buffer.ByteBuf;
@@ -12,18 +15,10 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.alibaba.fastjson.JSONObject;
-import com.hisign.bean.ClientResult;
-import com.hisign.bean.Message;
-import com.hisign.bean.WorkerRequest;
-import com.hisign.bean.WorkerResultRequest;
-import com.hisign.constants.Status;
 import com.hisign.constants.SystemConstants;
 import com.hisign.exception.HisignSDKException;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
 
 /**
  * 客户端处理类.
@@ -73,7 +68,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
         logger.info("fetchJobFromMaster");
 
         ByteBuf request;
-        request = Unpooled.buffer(1024);
+        request = Unpooled.buffer(20);
 
 //        RequestService.addValidateFields(jo);
 
@@ -81,14 +76,14 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
             request.writeBytes(getHeader());
         }
         
-        request.writeInt(1);
-        request.writeByte(2);
+        request.writeInt(1);//length
+        request.writeByte(HBVEMessageType.WORKER_FLAG);
+        
         ctx.writeAndFlush(request);
     }
     
     /**
      * 非活跃通道.
-     *
      * @param ctx
      * @throws Exception
      */
@@ -101,202 +96,72 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 
     /**
      * 接收消息.
-     *
      * @param ctx
      * @param msg
      * @throws Exception
      */
     @Override
-	public void channelRead(ChannelHandlerContext ctx, Object msg)
-			throws Exception {
-		logger.info(ctx.channel().remoteAddress() + "：" + msg);
+	public void channelRead(ChannelHandlerContext ctx, Object msg) {
+    	
+
+    	logger.info(ctx.channel().remoteAddress() + "：" + msg);
 		logger.info("worker channelRead..");
-		String connId = "";
 		
 		try {
-			
-			ByteBuf buf = (ByteBuf) msg;
-			
-			byte[] req = new byte[buf.readableBytes()];
-			buf.readBytes(req);
-			WorkerRequest workerRequest = parsePara(req);
-
-			connId = workerRequest.uuid_connId;
-
-//			int status = para.getInteger(Message.Status);
-//			if (status < 0) {
-//				logger.info("Worker 收到消息错误:" + body);
-//				ctx.close();
-//				return;
-//			}
-
-			float score = (float) 0.98;
-//			score = compute(
-//					workerRequest.clientRequest.getType1(),
-//					workerRequest.clientRequest.getType2(),
-//					workerRequest.clientRequest.getFace1(),
-//					workerRequest.clientRequest.getFace2()
-//					);
-			WorkerResultRequest workerResultRequest = new WorkerResultRequest();
-			workerResultRequest.setChannelHandlerContext(ctx);
-			workerResultRequest.setScore(score);
-			workerResultRequest.setStatus(0);
-			workerResultRequest.setUuid_connId(connId);
-			workerResultRequest.setStatusMessage("");
-			sendResult(workerResultRequest);
-			
-//			JSONObject result = composeResultToMaster(connId, score);
-//			logger.info("Worker finish task, result:" + result.toJSONString());
-//			sendMessage(result.toJSONString(), ctx);
-
+			HBVEMessage task = (HBVEMessage) msg;
+			task.ctx = ctx;
+			doTask(task);
+		} catch (HisignSDKException e) {
+			logger.error("doTask HisignSDKException");
+			e.printStackTrace();
 		} catch (IOException e) {
-			sendMessage(getErrorMessage(Status.ParaError, Status.ParaErrorMessg, connId), ctx);
-		}
-//		catch (HisignSDKException e) {
-//			logger.error("Hisign sdk compute error!");
-//			sendMessage(getErrorMessage(Status.ComputeError, Status.ComputeErrorMessg, connId), ctx);
-//		}
-		catch (Exception e) {
-			logger.error("Hisign sdk compute error!");
-//			sendMessage(getErrorMessage(Status.ComputeError, Status.ComputeErrorMessg, connId), ctx);
+			logger.error("doTask IOException");
+			e.printStackTrace();
 		}
 		finally{
 			fetchJobFromMaster(ctx);
 		}
 	}
-    
-    private void sendResult(WorkerResultRequest workerResultRequest){
+
+    public void doTask(HBVEMessage task) throws HisignSDKException, IOException {
     	
-    	ByteBuf byteBuf = Unpooled.buffer(1024);
-    	byteBuf.writeInt(workerResultRequest.getSize());
-    	System.out.println("result length" + workerResultRequest.getSize());
-    	
-    	byteBuf.writeByte(workerResultRequest.messageType);
-    	byteBuf.writeByte(0);
-    	byteBuf.writeFloat(workerResultRequest.getScore());
-    	
-    	byteBuf.writeInt(workerResultRequest.getUuid_connId().length());
-    	byteBuf.writeBytes(workerResultRequest.getUuid_connId().getBytes());
-    	
-    	byteBuf.writeInt(workerResultRequest.getStatusMessage().getBytes().length);
-    	byteBuf.writeBytes(workerResultRequest.getStatusMessage().getBytes());
-    	workerResultRequest.getChannelHandlerContext().writeAndFlush(byteBuf);
+    	if ( HBVEMessageType.getMessageType(task.header.messageType).equals(HBVEMessageType.MessageType.Error) ) {
+			//服务器错误消息handle
+		}
+    	else if (HBVEMessageType.isWorkerMess(task.header.messageType)) {
+			if (HBVEMessageType.getClientMessageType(task.header.messageType)
+					.equals(HBVEMessageType.ClientMessageType.Similarity)) {
+				ComputeSimilarityHandler computeSimilarityHandler = new ComputeSimilarityHandler();
+				float score = (float) 0.98;
+//				float score = computeSimilarityHandler.run(task.data);
+				
+				sendResult(
+						task.header.messageType, 
+						task.header.uuid.getBytes(),
+						SystemUtil.float2byte(score),
+						task.ctx
+						);
+			}
+			// Todo add new task type, 可以通过反射拿到处理handler
+		}
     }
     
-    private WorkerRequest parsePara(byte[] para) throws UnsupportedEncodingException {
+    public void sendResult(byte type, byte[] uuid, byte[] data, ChannelHandlerContext ctx){
     	
-    	int point = 0;
-    	
-    	WorkerRequest workerRequest = new WorkerRequest();
-    	workerRequest.message_type = SystemUtil.singleByteToInt(para[point]);
-    	point ++;
+    	int len = 1 + 32 + 4;
+    	ByteBuf byteBuf = Unpooled.buffer(len);
 
-    	int connLength = SystemUtil.fourByteArrayToInt(Arrays.copyOfRange(para, point, point+4));
-    	point += 4;
-    	workerRequest.uuid_connId = new String(Arrays.copyOfRange(para, point, point+connLength));
-    	point+=connLength;
-
-    	workerRequest.clientRequest.setType1(para[point]);
-    	point++;
-    	workerRequest.clientRequest.setType2(para[point]);
-    	point++;
-    	
-    	int face1Length = SystemUtil.fourByteArrayToInt(Arrays.copyOfRange(para, point, point+4));
-    	point += 4;
-    	workerRequest.clientRequest.setFace1(Arrays.copyOfRange(para, point, point+face1Length));
-    	point+=face1Length;
-    	
-    	int face2Length = SystemUtil.fourByteArrayToInt(Arrays.copyOfRange(para, point, point+4));
-    	point += 4;
-    	workerRequest.clientRequest.setFace2(Arrays.copyOfRange(para, point, point+face2Length));
-
-    	return workerRequest;
-	}
-    
-    private void printMess(String body) {
-    	String mess = body.length() > 200 ?
-    			body.substring(0, 200) : body;
-    	
-    	logger.info("Worker Server Receive Message." + "fulllength:"+ body.length() + "\n" + mess);
-	}
-    
-    private JSONObject composeResultToMaster(String connId, double score) {
-        JSONObject result = new JSONObject();
-        result.put(Message.MessageType, 3);
-        result.put(Message.ConnId, connId);
-        result.put(Message.Score, score);
-        result.put(Message.Status, 0);
-        RequestService.addValidateFields(result);
-        return result;
-	}
-    
-    private float compute(int type1, int type2, byte[] face1, byte[] face2) throws HisignSDKException, IOException{
-
-    	logger.info("compute similarity!");
-
-		byte[] temp1 = face1, temp2 = face2;
-    	if (type1 == 1) {
-    		//图片數據
-			temp1 = HisignBVESDK.getTemplateByImageByteArray(face1);
-        }
-    	if (type2 == 1) {
-    		//图片數據
-			temp2 = HisignBVESDK.getTemplateByImageByteArray(face2);
-        }
-    	
-    	logger.info("size of template:"+temp1.length + " "+temp2.length);
-    	return HisignBVESDK.compareFromTwoTemplate(temp1, temp2);
+    	byteBuf.writeByte(type);
+    	byteBuf.writeBytes(uuid);
+    	byteBuf.writeBytes(data);
+//
+//        ctx.writeAndFlush(byteBuf);
+        
+        HBVEBinaryProtocol.writeChannel(ctx, byteBuf.array());
     }
     
-    private void sendMessage(String resultMessage, ChannelHandlerContext chx) {
-//		resultMessage = SystemUtil.addNewLine(resultMessage);
-		ByteBuf byteBuf = Unpooled.buffer(1024);
-		byteBuf.writeInt(resultMessage.length());
-		byteBuf.writeBytes(resultMessage.getBytes());
-		chx.writeAndFlush(byteBuf);
-	}
-
-	private String getErrorMessage(int status, String messg, String connId){
-    	
-    	JSONObject jo = new JSONObject();
-    	jo.put(Message.Status, status);
-    	jo.put(Message.StatusMessage, messg);
-		jo.put(Message.ConnId, connId);
-
-		jo.put(Message.MessageType, 3);
-
-		return jo.toJSONString();
-    }
-
-    /**
-     * 接收完毕.
-     *
-     * @param ctx
-     * @throws Exception
-     */
-    @Override
-    public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-//        super.channelReadComplete(ctx);
-//        System.out.println("ReadComplete");
-    }
-
-//    /**
-//     * 关闭通道.
-//     *
-//     * @param ctx
-//     * @param promise
-//     * @throws Exception
-//     */
-//    @Override
-//    public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
-//    	System.out.println("close current worker channel");
-//    	Worker.workerCount.getAndDecrement();
-//        super.close(ctx, promise);
-//    }
-
     /**
      * 异常处理.
-     *
      * @param ctx
      * @param cause
      * @throws Exception
