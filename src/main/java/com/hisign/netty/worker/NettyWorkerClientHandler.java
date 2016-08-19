@@ -1,10 +1,9 @@
 package com.hisign.netty.worker;
 
-import com.hisign.hbve.protocol.HBVEBinaryProtocol;
 import com.hisign.hbve.protocol.HBVEMessage;
 import com.hisign.hbve.protocol.HBVEMessageType;
-import com.hisign.hbve.protocol.HBVEProcesser;
 import com.hisign.netty.worker.handler.ComputeSimilarityHandler;
+import com.hisign.netty.worker.handler.ExtractTemplateHandler;
 import com.hisign.util.SystemUtil;
 
 import io.netty.buffer.ByteBuf;
@@ -17,6 +16,8 @@ import org.slf4j.LoggerFactory;
 
 import com.hisign.constants.SystemConstants;
 import com.hisign.exception.HisignSDKException;
+import com.hisign.exception.ParseParaException;
+import com.hisign.exception.WorkerException;
 
 import java.io.IOException;
 
@@ -29,6 +30,8 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 	
 	public NettyWorkerClientHandler() {
 	}
+	
+	byte[] currUUID = {};
 
     static private Logger logger = LoggerFactory.getLogger(NettyWorkerClientHandler.class);
 
@@ -103,61 +106,95 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
     @Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) {
     	
-
-    	logger.info(ctx.channel().remoteAddress() + "：" + msg);
-		logger.info("worker channelRead..");
+		
+		HBVEMessage task = (HBVEMessage) msg;
+		byte[] uuid = task.header.uuid.getBytes();
+		currUUID = uuid;
+		task.ctx = ctx;
+		
+		logger.info(ctx.channel().remoteAddress() + "：" + msg);
+		logger.info("worker channelRead.." + " messageType:" + task.header.messageType + " uuid:" + task.header.uuid + " para_len:" + task.data.length);
 		
 		try {
-			HBVEMessage task = (HBVEMessage) msg;
-			task.ctx = ctx;
-			doTask(task);
+			byte[] result = doTask(task);
+			
+			sendResult(
+					task.header.messageType, 
+					uuid,
+					result,
+					task.ctx
+					);
+			logger.info("Finish task." + " messageType:" + task.header.messageType + " uuid:" + task.header.uuid + " result:" + new String(result));
+			
 		} catch (HisignSDKException e) {
 			logger.error("doTask HisignSDKException");
 			e.printStackTrace();
+			sendResult(HBVEMessageType.getErrorCode(e.errorId), uuid, e.getMessage().getBytes(), ctx);
+			
 		} catch (IOException e) {
 			logger.error("doTask IOException");
 			e.printStackTrace();
+		} catch (ParseParaException e) {
+			logger.error("doTask ParseParaException");
+			e.printStackTrace();
+			sendResult(HBVEMessageType.getErrorCode(e.errorId), uuid, e.getMessage().getBytes(), ctx);
+		} catch (WorkerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
+        catch (Exception e) {
+            e.printStackTrace();
+            logger.info("Error");
+        }
 		finally{
 			fetchJobFromMaster(ctx);
 		}
 	}
 
-    public void doTask(HBVEMessage task) throws HisignSDKException, IOException {
+    public byte[] doTask(HBVEMessage task) throws HisignSDKException, IOException, ParseParaException, WorkerException {
+    	
+    	byte[] result = null;
     	
     	if ( HBVEMessageType.getMessageType(task.header.messageType).equals(HBVEMessageType.MessageType.Error) ) {
-			//服务器错误消息handle
+			throw new WorkerException();
 		}
     	else if (HBVEMessageType.isWorkerMess(task.header.messageType)) {
+    		
+    		//计算相似度接口
 			if (HBVEMessageType.getClientMessageType(task.header.messageType)
 					.equals(HBVEMessageType.ClientMessageType.Similarity)) {
-				ComputeSimilarityHandler computeSimilarityHandler = new ComputeSimilarityHandler();
-				float score = (float) 0.98;
-//				float score = computeSimilarityHandler.run(task.data);
 				
-				sendResult(
-						task.header.messageType, 
-						task.header.uuid.getBytes(),
-						SystemUtil.float2byte(score),
-						task.ctx
-						);
+				ComputeSimilarityHandler computeSimilarityHandler = new ComputeSimilarityHandler();
+				result = SystemUtil.float2byte((float) 0.98);
+//				result = computeSimilarityHandler.run(task.data);
+				return result;
+			}
+			//取模板接口
+			if (HBVEMessageType.getClientMessageType(task.header.messageType)
+					.equals(HBVEMessageType.ClientMessageType.Extract_Template)) {
+				
+				ExtractTemplateHandler extractTemplateHandler = new ExtractTemplateHandler();
+				result = "huchengjian".getBytes();
+//				result = extractTemplateHandler.run(task.data);
+				return result;
 			}
 			// Todo add new task type, 可以通过反射拿到处理handler
 		}
+    	return result;
     }
     
     public void sendResult(byte type, byte[] uuid, byte[] data, ChannelHandlerContext ctx){
     	
-    	int len = 1 + 32 + 4;
-    	ByteBuf byteBuf = Unpooled.buffer(len);
-
+    	int messageLen = 1 + uuid.length + data.length; //数据包大小。 type + uuid + data
+    	ByteBuf byteBuf = Unpooled.buffer(messageLen + 4);
+    	
+    	byteBuf.writeInt(messageLen);
+    	
     	byteBuf.writeByte(type);
     	byteBuf.writeBytes(uuid);
     	byteBuf.writeBytes(data);
-//
-//        ctx.writeAndFlush(byteBuf);
-        
-        HBVEBinaryProtocol.writeChannel(ctx, byteBuf.array());
+
+    	ctx.writeAndFlush(byteBuf);
     }
     
     /**
@@ -169,6 +206,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         logger.info("异常信息：" + cause.getMessage());
+        sendResult((byte)0xC1, currUUID, cause.getMessage().getBytes(), ctx);
     }
 
     private byte[] getHeader() {

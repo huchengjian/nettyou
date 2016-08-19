@@ -95,7 +95,10 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 			//worker fetch task
     		processWorkerRequest(req);
 		}
-    	else if (HBVEMessageType.getMessageType(type).equals(HBVEMessageType.MessageType.Worker_Result)){
+    	else if (HBVEMessageType.getMessageType(type).equals(HBVEMessageType.MessageType.Worker_Result)
+                ||
+                HBVEMessageType.getMessageType(type).equals(HBVEMessageType.MessageType.Worker_Error_Result)
+                ){
 			processResult(req);
 		}
     }
@@ -165,6 +168,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 			HBVEBinaryProtocol.writeChannel(worker.ctx, buf.array());
 			
 		} else {
+            logger.info("no task now" + server.allClientQueue.size());
 			server.waitingQueue.add(worker);
 			return;
 		}
@@ -185,7 +189,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 		}
 
         ByteBuf buf = Unpooled.buffer(1 + 4 + workerResult.data.length);
-        buf.writeByte(workerResult.header.messageType);
+        buf.writeByte(workerResult.header.messageType & (~HBVEMessageType.WORKER_FLAG));
         buf.writeInt(clientMes.header.connId);
         buf.writeBytes(workerResult.data);
 

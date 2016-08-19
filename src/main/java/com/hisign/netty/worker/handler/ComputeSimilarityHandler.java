@@ -7,22 +7,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hisign.exception.HisignSDKException;
+import com.hisign.exception.ParseParaException;
 import com.hisign.netty.worker.HisignBVESDK;
 import com.hisign.util.SystemUtil;
 
 /**
  * Created by hugo on 8/17/16.
  */
-public class ComputeSimilarityHandler implements WorkerHandler{
+public class ComputeSimilarityHandler extends WorkerHandler{
 	
 	static private Logger logger = LoggerFactory.getLogger(ComputeSimilarityHandler.class);
 	
-	public float run(byte[] data) throws HisignSDKException, IOException {
+	public byte[] run(byte[] data) throws HisignSDKException, IOException, ParseParaException {
 		ComputeSimilarityPara computeSimilarityPara = ComputeSimilarityPara.paraseData(data);
 		float score = compute(computeSimilarityPara.getType1(), computeSimilarityPara.getType2(),
 				computeSimilarityPara.getFace1(), computeSimilarityPara.getFace2());
-		
-		return score;
+		return SystemUtil.float2byte(score);
 	}
 	
 	private float compute(int type1, int type2, byte[] face1, byte[] face2) throws HisignSDKException, IOException{
@@ -75,24 +75,24 @@ public class ComputeSimilarityHandler implements WorkerHandler{
     		this.face2 = face2;
     	}
 
-        public static ComputeSimilarityPara paraseData(byte[] para) {
+        public static ComputeSimilarityPara paraseData(byte[] para) throws ParseParaException {
         	
         	ComputeSimilarityPara computeSimilarityPara = new ComputeSimilarityPara();
         	int point = 0;
         	
-        	computeSimilarityPara.setType1(para[point]);
+        	computeSimilarityPara.setType1(getByte(para, point));
         	point++;
-        	computeSimilarityPara.setType2(para[point]);
+        	computeSimilarityPara.setType2(getByte(para, point));
         	point++;
         	
-        	int face1Length = SystemUtil.fourByteArrayToInt(Arrays.copyOfRange(para, point, point+4));
+        	int face1Length = SystemUtil.fourByteArrayToInt(getBytes(para, point, point+4));
         	point += 4;
-        	computeSimilarityPara.setFace1(Arrays.copyOfRange(para, point, point+face1Length));
-        	point+=face1Length;
+        	computeSimilarityPara.setFace1(getBytes(para, point, point+face1Length));
+        	point += face1Length;
         	
-        	int face2Length = SystemUtil.fourByteArrayToInt(Arrays.copyOfRange(para, point, point+4));
+        	int face2Length = SystemUtil.fourByteArrayToInt(getBytes(para, point, point+4));
         	point += 4;
-        	computeSimilarityPara.setFace2(Arrays.copyOfRange(para, point, point+face2Length));
+        	computeSimilarityPara.setFace2(getBytes(para, point, point+face2Length));
         	
             return computeSimilarityPara;
         }

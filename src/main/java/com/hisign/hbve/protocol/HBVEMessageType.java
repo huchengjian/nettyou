@@ -8,11 +8,11 @@ package com.hisign.hbve.protocol;
 public class HBVEMessageType{
 	
 	public enum MessageType {
-	    Error, Worker_Fetch, Worker_Result, Client;
+	    Error, Worker_Error_Result, Worker_Fetch, Worker_Result, Client;
 	}
 	
 	public enum ClientMessageType {
-	    Similarity, Extract_Template;
+	    Similarity, Extract_Template, UnknowType;
 	}
 	
 	public static final byte EXCEPTION = (byte) 0x80;
@@ -27,7 +27,7 @@ public class HBVEMessageType{
 		MessageType messageType = null;
 		
 		if ( (type & HBVEMessageType.EXCEPTION) != 0 ) {
-			messageType = MessageType.Error;
+            messageType = isWorkerMess(type) ? MessageType.Worker_Error_Result : MessageType.Error;
 		}
     	else if ((type & HBVEMessageType.WORKER_FLAG) == 0 ) {
     		messageType = MessageType.Client;
@@ -50,9 +50,20 @@ public class HBVEMessageType{
 		if (clientTransform == CLIENT_COMPUTE_SIMILARITY) {
 			return ClientMessageType.Similarity;
 		}
+		if (clientTransform == CLIENT_EXTRACT_TEMPLATE) {
+			return ClientMessageType.Extract_Template;
+		}
 		// Todo add MessageType
 		else {
-			return null;
+			return ClientMessageType.UnknowType;
 		}
+	}
+	
+	/**
+	 * 用于传输的errorcode
+	 */
+	public static byte getErrorCode(byte errorId){
+		byte b = (byte) (errorId | EXCEPTION);
+		return b;
 	}
 }

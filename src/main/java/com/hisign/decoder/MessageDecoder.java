@@ -32,7 +32,10 @@ public class MessageDecoder extends ByteToMessageDecoder{
             if (HBVEMessageType.getMessageType(type).equals(HBVEMessageType.MessageType.Worker_Fetch)){
                 header = new HBVEHeader(type, "");
             }
-            else if (HBVEMessageType.getMessageType(type).equals(HBVEMessageType.MessageType.Worker_Result)){
+            else if (HBVEMessageType.getMessageType(type).equals(HBVEMessageType.MessageType.Worker_Result)
+                    ||
+                    HBVEMessageType.getMessageType(type).equals(HBVEMessageType.MessageType.Worker_Error_Result)
+                    ){
                 byte[] uuid = new byte[32];
                 in.readBytes(uuid);
                 header = new HBVEHeader(type, new String(uuid));
@@ -45,7 +48,8 @@ public class MessageDecoder extends ByteToMessageDecoder{
 
             else if (HBVEMessageType.getMessageType(type).equals(HBVEMessageType.MessageType.Error)){
                 System.out.println("error message");
-                return;
+                byte[] data = new byte[in.readableBytes()];
+                System.out.println(in.readBytes(data));
             }
 
 			byte[] data = new byte[in.readableBytes()];
@@ -53,7 +57,7 @@ public class MessageDecoder extends ByteToMessageDecoder{
 	        HBVEMessage hm = new HBVEMessage(header, data);
 	        out.add(hm);
 
-            hm.print();
+//            hm.print();
 		} catch (Exception e) {
 			System.out.println("ERROR: Message Decoder Error!");
             //Todo 返回结果
