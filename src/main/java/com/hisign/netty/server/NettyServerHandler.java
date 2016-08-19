@@ -64,6 +64,13 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         logger.info(ctx.channel().remoteAddress() + "：Server 通道激活");
     }
+    
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+    	ctx.close();
+        logger.info(ctx.channel().remoteAddress() + "：Server 通道关闭");
+    }
+    
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg)
@@ -114,14 +121,22 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 //		timeoutQueue.add(clientMes);
     }
     
-    public void wakeupWaitingWorkIfNeed(){
-    	HBVEMessage waitWorker = server.waitingQueue.poll();
-    	
-    	if (waitWorker != null) {
-    		logger.info("wakeup worker.");
-    		processWorkerRequest(waitWorker);
+	public void wakeupWaitingWorkIfNeed() {
+		HBVEMessage waitWorker = null;
+		while(true){
+			waitWorker = server.waitingQueue.poll();
+			if (waitWorker == null){
+				logger.info("try to wakeup worker, but no more worker in queue!");
+				return;
+			}
+			if(waitWorker.ctx != null && waitWorker.ctx.channel().isActive()) {
+				logger.info("wakeup worker.");
+				break;
+			}
 		}
-    }
+		
+		processWorkerRequest(waitWorker);
+	}
     
 //    public void fetchTask(HBVEMessage msg){
 //
@@ -151,7 +166,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 		
 		ByteBuf byteBuf = Unpooled.buffer(1024);
 		if (clientTask != null) {
-			logger.info("worker消费任务, 任务数:" + server.allClientQueue.size());
+			logger.info("worker消费任务, 剩余任务数:" + server.allClientQueue.size());
 			
 			// 后期需要增加容错机制，consumingChannel为正在处理中的任务，需要对任务长期执行出错的处理
 			int connId = clientTask.header.connId;

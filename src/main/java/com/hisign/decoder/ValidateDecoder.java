@@ -53,7 +53,7 @@ public class ValidateDecoder extends ByteToMessageDecoder {
 				ctx.channel().close();
 				return;
 			}
-			log.info("validate header pass.");
+			log.info("new conn. validate header pass.");
 		}
 		isValidated = true;
 		

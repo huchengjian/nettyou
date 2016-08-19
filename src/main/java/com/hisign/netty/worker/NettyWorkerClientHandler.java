@@ -166,7 +166,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 				
 				ComputeSimilarityHandler computeSimilarityHandler = new ComputeSimilarityHandler();
 				result = SystemUtil.float2byte((float) 0.98);
-//				result = computeSimilarityHandler.run(task.data);
+				result = computeSimilarityHandler.run(task.data);
 				return result;
 			}
 			//取模板接口
@@ -175,7 +175,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 				
 				ExtractTemplateHandler extractTemplateHandler = new ExtractTemplateHandler();
 				result = "huchengjian".getBytes();
-//				result = extractTemplateHandler.run(task.data);
+				result = extractTemplateHandler.run(task.data);
 				return result;
 			}
 			// Todo add new task type, 可以通过反射拿到处理handler

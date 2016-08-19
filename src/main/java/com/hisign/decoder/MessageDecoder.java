@@ -27,6 +27,9 @@ public class MessageDecoder extends ByteToMessageDecoder{
         HBVEHeader header = null;
 
 		try {
+			if (in.readableBytes() <= 1) {
+				return;
+			}
 			byte type = in.readByte();
 
             if (HBVEMessageType.getMessageType(type).equals(HBVEMessageType.MessageType.Worker_Fetch)){
