@@ -1,6 +1,7 @@
 package com.hisign.decoder;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import com.hisign.hbve.protocol.HBVEHeader;
 import com.hisign.hbve.protocol.HBVEMessage;
@@ -27,7 +28,7 @@ public class MessageDecoder extends ByteToMessageDecoder{
         HBVEHeader header = null;
 
 		try {
-			if (in.readableBytes() <= 1) {
+			if (in.readableBytes() <= 0) {
 				return;
 			}
 			byte type = in.readByte();
@@ -58,9 +59,11 @@ public class MessageDecoder extends ByteToMessageDecoder{
 			byte[] data = new byte[in.readableBytes()];
 	        in.readBytes(data);
 	        HBVEMessage hm = new HBVEMessage(header, data);
+	        hm.timeout = TimeUnit.NANOSECONDS.convert(3, TimeUnit.SECONDS);
+	        System.out.println("timeout" + hm.timeout);
+	        
 	        out.add(hm);
-
-//            hm.print();
+//          hm.print();
 		} catch (Exception e) {
 			System.out.println("ERROR: Message Decoder Error!");
             //Todo 返回结果

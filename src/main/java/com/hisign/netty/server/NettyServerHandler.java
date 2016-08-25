@@ -9,19 +9,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
-import com.hisign.bean.ClientRequest;
-import com.hisign.bean.Message;
-import com.hisign.bean.Request;
-import com.hisign.bean.WorkerRequest;
-import com.hisign.bean.WorkerResultRequest;
-import com.hisign.constants.Status;
-import com.hisign.constants.SystemConstants;
 import com.hisign.hbve.protocol.HBVEBinaryProtocol;
 import com.hisign.hbve.protocol.HBVEMessage;
 import com.hisign.hbve.protocol.HBVEMessageType;
-import com.hisign.hbve.protocol.HBVEProcesser;
 import com.hisign.util.SHA1;
 import com.hisign.util.SystemUtil;
 
@@ -39,7 +29,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 	private NettyServer server;
 	private DelayQueue<HBVEMessage> timeoutQueue;
 	
-//	private Thread timeOutChecker;
+	private Thread timeOutChecker;
 
 	AtomicBoolean isValidate = new AtomicBoolean();
 	
@@ -50,9 +40,9 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 		this.server = server;
 		isValidate.set(false);
 		
-//		timeoutQueue = new DelayQueue<Request>();
-//		timeOutChecker = new Thread(new TimeOutChecker(server, timeoutQueue));
-//		timeOutChecker.start();
+		timeoutQueue = new DelayQueue<HBVEMessage>();
+		timeOutChecker = new Thread(new TimeOutChecker(server, timeoutQueue));
+		timeOutChecker.start();
 	}
 	
 	 /**
@@ -114,6 +104,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
     	
 		server.allClientQueue.add(clientMes);
 		logger.info("新增任务，任务数:"+ server.allClientQueue.size());
+		timeoutQueue.add(clientMes);
 
 		wakeupWaitingWorkIfNeed();
 		
@@ -190,7 +181,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 	}
 
 	public void processResult(HBVEMessage workerResult){
-		logger.info("完成任务, result: " + SystemUtil.byte2float(workerResult.data, 0));
+		logger.info("完成任务");
 
 //        if ( (workerResult.header.messageType | HBVEMessageType.EXCEPTION) != 0 ){
 //
