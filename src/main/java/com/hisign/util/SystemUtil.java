@@ -1,17 +1,11 @@
 package com.hisign.util;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
 import com.hisign.constants.SystemConstants;
 
 public class SystemUtil {
-	
-	public static String getStringFromByte(byte[] data) throws UnsupportedEncodingException {
-		return new String(data, "UFT-8");
-
-	}
 	
 	public static String encodeConnId(String connid) {
 		UUID randomUuid = UUID.randomUUID();
@@ -21,6 +15,14 @@ public class SystemUtil {
 //	public static String getUUID(String connid){
 //		return UUID.randomUUID();
 //	}
+	
+	public static byte[] int2byte(int res) {
+		byte[] b = new byte[4];
+		for (int i = 0; i < 4; i++) {
+			b[i] = (byte) (res >>> (24 - i * 8));
+		}
+		return b;
+	}
 	
 	public static int decodeConnId(String uuid) {
 		if (uuid.length() > SystemConstants.UUIDLength) {
@@ -146,4 +148,10 @@ public class SystemUtil {
 	    }  
 	    return b;  
 	}  
+	
+	public static void main(String[] args) {
+		System.out.println( byte2float( float2byte((float)0.783242), 0));
+		System.out.println(bytesToHexString(int2byte(1)));
+		Integer s;
+	}
 }

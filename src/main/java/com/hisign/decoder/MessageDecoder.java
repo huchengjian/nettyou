@@ -60,7 +60,6 @@ public class MessageDecoder extends ByteToMessageDecoder{
 	        in.readBytes(data);
 	        HBVEMessage hm = new HBVEMessage(header, data);
 	        hm.timeout = TimeUnit.NANOSECONDS.convert(3, TimeUnit.SECONDS);
-	        System.out.println("timeout" + hm.timeout);
 	        
 	        out.add(hm);
 //          hm.print();

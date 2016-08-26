@@ -76,7 +76,8 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 //        RequestService.addValidateFields(jo);
 
         if (isFirstReq) {
-            request.writeBytes(getHeader());
+            request.writeBytes(SystemConstants.MAGIC_BYTES);
+            request.writeBytes(SystemConstants.CURRENT_VERSION_BYTES);
         }
         
         request.writeInt(1);//length

@@ -45,10 +45,10 @@ public class ValidateDecoder extends ByteToMessageDecoder {
 				return;
 			}
 			
-			byte[] version = new byte[3];
-			in.readBytes(version);
-			if (!new String(version, "utf-8").equals(SystemConstants.CURRENT_VERSION)) {
-				log.error("Receive Error Version:" + new String(version, "utf-8"));
+//			byte[] version = new byte[3];
+			int version = in.readInt();
+			if (version != SystemConstants.CURRENT_VERSION) {
+				log.error("Receive Error Version:" +version);
 				in.clear();
 				ctx.channel().close();
 				return;
@@ -56,7 +56,6 @@ public class ValidateDecoder extends ByteToMessageDecoder {
 			log.info("new conn. validate header pass.");
 		}
 		isValidated = true;
-		
 		
         byte[] req = new byte[in.readableBytes()];
         in.readBytes(req);
