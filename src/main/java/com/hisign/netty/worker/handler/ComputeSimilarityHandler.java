@@ -22,7 +22,7 @@ public class ComputeSimilarityHandler extends WorkerHandler{
 		ComputeSimilarityPara computeSimilarityPara = ComputeSimilarityPara.paraseData(data);
 		float score = compute(computeSimilarityPara.getType1(), computeSimilarityPara.getType2(),
 				computeSimilarityPara.getFace1(), computeSimilarityPara.getFace2());
-		return SystemUtil.float2byte(score);
+		return SystemUtil.int2byte(Float.floatToIntBits(score));
 	}
 	
 	private float compute(int type1, int type2, byte[] face1, byte[] face2) throws HisignSDKException, IOException{

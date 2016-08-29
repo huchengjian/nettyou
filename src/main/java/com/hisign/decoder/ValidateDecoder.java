@@ -36,6 +36,13 @@ public class ValidateDecoder extends ByteToMessageDecoder {
 		//todos 判断可读字节是否够
 		
 		if(!isValidated){
+			
+			if (in.readableBytes() < 8) {
+				log.info(ctx.channel().remoteAddress() + 
+						" Not enough read bytes, now is " + in.readableBytes());
+				return;
+			}
+			
 			byte[] head = new byte[4];
 			in.readBytes(head);
 			if (! new String(head, "utf-8").equals(SystemConstants.MAGIC)) {

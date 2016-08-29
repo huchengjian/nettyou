@@ -166,7 +166,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 					.equals(HBVEMessageType.ClientMessageType.Similarity)) {
 				
 				ComputeSimilarityHandler computeSimilarityHandler = new ComputeSimilarityHandler();
-				result = SystemUtil.float2byte((float) 0.98);
+				result = SystemUtil.int2byte(Float.floatToIntBits((float)0.98));
 				result = computeSimilarityHandler.run(task.data);
 				return result;
 			}
