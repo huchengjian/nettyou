@@ -37,7 +37,7 @@ public class TimeOutChecker implements Runnable {
 	}
 	
 	private void timeOutProcess(HBVEMessage conn){
-		System.out.println("find timeout message");
+		System.out.println("find timeout message." + timeOutQueue.size());
 		conn.setIsTimeOut();
 	}
 }
