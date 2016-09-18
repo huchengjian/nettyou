@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import sun.util.logging.resources.logging;
+
 import com.hisign.exception.HisignSDKException;
 import com.hisign.thid.EyePos;
 import com.hisign.thid.FacePos;
@@ -19,13 +21,9 @@ public class HisignBVESDK {
 	static String fileName1 = "F:\\1.jpg";
 	static String fileName2 = "F:\\2.jpg";
 	
-	static{
-		THIDFaceSDK.init(null, null, null);
-	}
-	
 	public static void main(String[] args) throws IOException, HisignSDKException {
 		int init = THIDFaceSDK.init(null, null, null);
-		System.out.println(init);
+		System.out.println("init:" + init);
 		
 		byte[] i1 = getTemplateByImageByteArray(readFile(new File(fileName1)));
 		byte[] i2 = getTemplateByImageByteArray(readFile(new File(fileName2)));
@@ -81,26 +79,22 @@ public class HisignBVESDK {
 		List<FacePos> facePoses = new ArrayList<FacePos>();
 		int detect = THIDFaceSDK.detect(grayimg, null, null, 1, facePoses);
 		System.out.println("detect返回值：" + detect);
-		EyePos eyepos = new EyePos();
-		int locate = 0;
-		if (facePoses.size() > 0) {
-			locate = THIDFaceSDK.locate(grayimg, facePoses.get(0).rect, eyepos);
-		}
-		System.out.println("locate返回值：" + locate);
+		
 		Point[] points = new Point[88];
 		int align = 0;
-		if (facePoses.size() > 0 && eyepos.left != null & eyepos.right != null) {
-			align = THIDFaceSDK.align(grayimg, eyepos, points);
+		if (facePoses.size() > 0) {
+//			align = THIDFaceSDK.align(grayimg, eyepos, points);
+			FacePos facePos = facePoses.get(0);
+			align = THIDFaceSDK.alignByFace(grayimg, facePos.rect, points);
 		}
 		System.out.println("align返回值：" + align);
 
 		// 获取模板数据
-		if (facePoses.size() > 0 && eyepos.left != null && eyepos.right != null) {
+		if (facePoses.size() > 0) {
 			THIDFaceSDK.extract(grayimg, points, template);
 		} else {
 			template = null;
 		}
-
 		return template;
 	}
 }
