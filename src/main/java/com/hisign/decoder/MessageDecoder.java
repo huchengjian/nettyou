@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 import com.hisign.hbve.protocol.HBVEHeader;
 import com.hisign.hbve.protocol.HBVEMessage;
 import com.hisign.hbve.protocol.HBVEMessageType;
+import com.hisign.netty.server.Metrics;
 import com.hisign.util.SystemUtil;
 
 import io.netty.buffer.ByteBuf;
@@ -24,6 +25,8 @@ public class MessageDecoder extends ByteToMessageDecoder{
 	@Override
 	protected void decode(ChannelHandlerContext ctx, ByteBuf in,
 			List<Object> out) throws Exception {
+		
+		recordMetrics(ctx);
 		
         HBVEHeader header = null;
 
@@ -59,7 +62,7 @@ public class MessageDecoder extends ByteToMessageDecoder{
 			byte[] data = new byte[in.readableBytes()];
 	        in.readBytes(data);
 	        HBVEMessage hm = new HBVEMessage(header, data);
-	        hm.timeout = TimeUnit.NANOSECONDS.convert(3, TimeUnit.SECONDS);
+	        hm.timeout = TimeUnit.NANOSECONDS.convert(10, TimeUnit.SECONDS);
 	        
 	        out.add(hm);
 //          hm.print();
@@ -69,4 +72,10 @@ public class MessageDecoder extends ByteToMessageDecoder{
 			e.printStackTrace();
 		}
 	}
+	
+	void recordMetrics(ChannelHandlerContext ctx){
+		String addr = ctx.channel().remoteAddress().toString();
+		Metrics.lastConnTimeMap.put(addr, System.currentTimeMillis());
+	}
+	
 }
