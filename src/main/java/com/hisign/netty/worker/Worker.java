@@ -1,5 +1,7 @@
 package com.hisign.netty.worker;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
@@ -23,13 +25,20 @@ public class Worker {
 	public static AtomicInteger workerCount = new AtomicInteger(0);
 	
 	static private Logger logger = LoggerFactory.getLogger(NettyServer.class);
+	
+	static String LOCALHOST = SystemConstants.NettyServerAddr;
+	static int LOCALPORT = 8089;
 
 	public static void main(String[] args) throws InterruptedException {
+		
+//		List<String> ips = new ArrayList<String>();
+		String allServers = LOCALHOST;
+		int port = LOCALPORT;
 
 		if (args != null && args.length >= 2) {
 			try {
-				WorkerRunnable.serverPort = Integer.parseInt(args[0]);
-				WorkerRunnable.serverIp = args[1];
+				port = Integer.parseInt(args[0]);
+				allServers = args[1].trim();
 
 				if (args.length >= 3) {
 					SystemConstants.MaxWorker = Integer.parseInt(args[2]);
@@ -39,17 +48,19 @@ public class Worker {
 			}
 		}
 
-//		Worker worker = new Worker();
+		logger.info("Worker start. Thread count: " + SystemConstants.MaxWorker);
 		
-		logger.info("worker start at " + WorkerRunnable.serverIp + ". Thread Count:" + SystemConstants.MaxWorker);
+		int nameT = 0;
 		for(int i = 0; i < SystemConstants.MaxWorker; i++){
-			new Thread(new WorkerRunnable()).start();
+			for (String ip : allServers.split(",")) {
+				new Thread(new WorkerRunnable(port, ip), String.valueOf(nameT++)).start();
+			}
 		}
 		Thread.sleep(2000);
 	}
 
 	/**
-	 * not used
+	 * Not used anymore.
 	 */
 	public void run() {
 		try {

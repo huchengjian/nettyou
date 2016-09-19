@@ -7,10 +7,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import sun.util.logging.resources.logging;
-
 import com.hisign.exception.HisignSDKException;
-import com.hisign.thid.EyePos;
 import com.hisign.thid.FacePos;
 import com.hisign.thid.GrayImg;
 import com.hisign.thid.Point;

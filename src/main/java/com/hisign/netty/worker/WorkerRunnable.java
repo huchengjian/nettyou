@@ -1,34 +1,37 @@
 package com.hisign.netty.worker;
 
-import com.hisign.constants.SystemConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 public class WorkerRunnable implements Runnable {
+	
+	public static String name;
 
-	public static int serverPort;
-	public static String serverIp;
-
-	/**
-	 * 初始化默认的ip、端口
-	 */
-	static{
-		serverPort = SystemConstants.NettyServerPort;
-		serverIp = SystemConstants.NettyServerAddr;
+	public int serverPort;
+	public String serverIp;
+	
+	static private Logger logger = LoggerFactory.getLogger(WorkerRunnable.class);
+	
+	WorkerRunnable(int port, String ip){
+		serverPort = port;
+		serverIp = ip;
 	}
 	
 	public void run() {
 		while (true) {
 			try {
-				NettyWorker nettyClient = new NettyWorker();
-				nettyClient.connect(serverIp, serverPort);
+				System.out.printf("Thread %s Connect %s:%d \n", Thread.currentThread().getName(), serverIp, serverPort);
+				NettyWorker worker = new NettyWorker();
+				worker.connect(serverIp, serverPort);
 			} catch (Exception e) {
-				e.printStackTrace();
-				
+//				e.printStackTrace();
+				System.out.printf("Thread %s Connect %s:%d error, sleep 8s and try again.\n", Thread.currentThread().getName(), serverIp, serverPort);
 				try {
 					Thread.sleep(3000);
 				} catch (InterruptedException e1) {
 					e1.printStackTrace();
 				}
-				System.out.println("connection error, sleep 3s and try again.");
 			}
 		}
 	}

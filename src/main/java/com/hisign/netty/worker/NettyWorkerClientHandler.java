@@ -58,7 +58,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
      */
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        logger.info(ctx.channel().remoteAddress() + "：通道激活");
+        logger.info(ctx.channel().remoteAddress() + "：通道激活. " + "fetchJobFromMaster");
 //        super.channelActive(ctx);
 
         fetchJobFromMaster(ctx);
@@ -67,8 +67,6 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
     }
 
     public void fetchJobFromMaster(ChannelHandlerContext ctx){
-
-        logger.info("fetchJobFromMaster");
 
         ByteBuf request;
         request = Unpooled.buffer(20);
