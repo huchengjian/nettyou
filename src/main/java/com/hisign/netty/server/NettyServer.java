@@ -1,5 +1,6 @@
 package com.hisign.netty.server;
 
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -43,7 +44,7 @@ public class NettyServer {
 	
     public void bind(int port) throws Exception {
 
-    	logger.info("----------------启动服务器----------------");
+    	logger.info("----------------启动服务器:" + port + "----------------");
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup(10);
         try {
@@ -86,8 +87,8 @@ public class NettyServer {
     }
 
     public static void main(String[] args) throws Exception {
-    	
-    	System.out.println(System.getProperty("user.dir"));
+
+        System.out.println(System.getProperty("user.dir"));
         int port = SystemConstants.NettyServerPort;
         if (args != null && args.length > 0) {
             try {
@@ -96,6 +97,38 @@ public class NettyServer {
                 logger.info("port error. use integer value.");
             }
         }
-        new NettyServer().bind(port);
+        NettyServer server = new NettyServer();
+        
+        ShutdownDaemonHook shutdownHook = new ShutdownDaemonHook(server);
+        Runtime.getRuntime().addShutdownHook(shutdownHook);
+
+
+        server.bind(port);
+    }
+
+    public static class ShutdownDaemonHook extends Thread {
+
+        NettyServer server;
+        ShutdownDaemonHook(NettyServer s){
+            server = s;
+        }
+
+        /**
+         * 循环并使用hook关闭所有后台线程
+         *
+         * @see java.lang.Thread#run()
+         */
+        @Override
+        public void run() {
+            logger.info("Running shutdown sync");
+            Iterator<HBVEMessage> iterator = server.allClientQueue.iterator();
+            while (iterator.hasNext()) {  
+            	HBVEMessage message = iterator.next();
+            	System.out.println("close conn: " +  message.ctx.channel().remoteAddress() +
+                        ". Id: " + message.header.connId);
+                message.ctx.channel().close();
+            }  
+        }
     }
 }
+
