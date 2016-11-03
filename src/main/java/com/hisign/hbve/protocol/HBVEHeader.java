@@ -7,14 +7,14 @@ public class HBVEHeader {
 	
 	public String uuid;
 	
-	public String workerSDKVersion;
+	public float workerSDKVersion;
 	
 	public HBVEHeader(byte t, int id){
 		messageType = t;
 		connId = id;
 	}
 	
-	public HBVEHeader(byte t, String version, int id){
+	public HBVEHeader(byte t, float version, int id){
 		messageType = t;
 		workerSDKVersion = version;
 		connId = id;

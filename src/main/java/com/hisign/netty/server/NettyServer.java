@@ -7,6 +7,7 @@ import java.util.Queue;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.hisign.constants.SystemConstants;
 import com.hisign.decoder.MessageDecoder;
@@ -34,18 +35,20 @@ public class NettyServer {
 //	public Queue<HBVEMessage> allClientQueue;
 //	public Queue<HBVEMessage> waitingQueue;
 	
-	public Map<String, Queue<HBVEMessage>> allClientQueue;
-	public Map<String, Queue<HBVEMessage>> waitingQueue;
+	public Queue<HBVEMessage> allClientQueue;
+	public Map<Float, Queue<HBVEMessage>> waitingQueue;
 	
-	public Map<String, Long> surviveWorker;
+//	public Map<String, Long> surviveWorker;
+	
+	public static AtomicReference<Float> maxWorkerVersion = new AtomicReference<Float>(0f);  
 	
 	NettyServer(){
 		consumingChannel = new ConcurrentHashMap<String, HBVEMessage>();
 		
-		allClientQueue = new HashMap<String, Queue<HBVEMessage>>();
-		waitingQueue = new HashMap<String, Queue<HBVEMessage>>();
+		allClientQueue = new ConcurrentLinkedQueue<HBVEMessage>();
+		waitingQueue = new HashMap<Float, Queue<HBVEMessage>>();
 		
-		surviveWorker = new HashMap<String, Long>();
+//		surviveWorker = new HashMap<String, Long>();
 //		allClientQueue = new ConcurrentLinkedQueue<HBVEMessage>();
 //		waitingQueue = new ConcurrentLinkedQueue<HBVEMessage>();
 	}
@@ -95,20 +98,20 @@ public class NettyServer {
     }
     
     public void addWatiWorker(HBVEMessage worker){
-    	String verion = worker.header.workerSDKVersion;
+    	float verion = worker.header.workerSDKVersion;
     	if (!waitingQueue.containsKey(verion)) {
     		waitingQueue.put(verion, new ConcurrentLinkedQueue<HBVEMessage>());
 		}
     	waitingQueue.get(verion).add(worker);
     }
     
-    public void addClient(HBVEMessage client){
-    	String verion = client.header.workerSDKVersion;
-    	if (!allClientQueue.containsKey(verion)) {
-    		allClientQueue.put(verion, new ConcurrentLinkedQueue<HBVEMessage>());
-		}
-    	allClientQueue.get(verion).add(client);
-    }
+//    public void addClient(HBVEMessage client){
+//    	String verion = client.header.workerSDKVersion;
+//    	if (!allClientQueue.containsKey(verion)) {
+//    		allClientQueue.put(verion, new ConcurrentLinkedQueue<HBVEMessage>());
+//		}
+//    	allClientQueue.get(verion).add(client);
+//    }
 
     public static void main(String[] args) throws Exception {
 
@@ -143,23 +146,20 @@ public class NettyServer {
          * @see java.lang.Thread#run()
          */
         @Override
-        public void run() {
-            logger.info("Running shutdown sync");
-            
-			for (Entry<String, Queue<HBVEMessage>> entry : server.allClientQueue.entrySet()) {
-				
-				Queue<HBVEMessage> queue = entry.getValue();
+		public void run() {
+			logger.info("Running shutdown sync");
 
-				Iterator<HBVEMessage> iterator = queue.iterator();
-				while (iterator.hasNext()) {
-					HBVEMessage message = iterator.next();
-					System.out.println("close conn: "
-							+ message.ctx.channel().remoteAddress() + ". Id: "
-							+ message.header.connId);
-					message.ctx.channel().close();
-				}
+			Queue<HBVEMessage> queue = server.allClientQueue;
+
+			Iterator<HBVEMessage> iterator = queue.iterator();
+			while (iterator.hasNext()) {
+				HBVEMessage message = iterator.next();
+				System.out.println("close conn: "
+						+ message.ctx.channel().remoteAddress() + ". Id: "
+						+ message.header.connId);
+				message.ctx.channel().close();
 			}
 		}
-    }
+	}
 }
 

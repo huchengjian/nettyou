@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 import com.hisign.hbve.protocol.HBVEHeader;
 import com.hisign.hbve.protocol.HBVEMessage;
 import com.hisign.hbve.protocol.HBVEMessageType;
+import com.hisign.hbve.protocol.HBVEProtocol;
 import com.hisign.netty.server.Metrics;
 import com.hisign.util.SystemUtil;
 
@@ -39,27 +40,26 @@ public class MessageDecoder extends ByteToMessageDecoder{
             if (HBVEMessageType.getMessageType(type).equals(HBVEMessageType.MessageType.Worker_Fetch)){
             	header = new HBVEHeader(type);
             	
-                byte[] workerSDKVersion = new byte[3];
+                byte[] workerSDKVersion = new byte[HBVEProtocol.Header_SDKVERSION_LEN];
                 in.readBytes(workerSDKVersion);
-                header.workerSDKVersion = new String(workerSDKVersion);
+                header.workerSDKVersion = Float.intBitsToFloat(SystemUtil.fourByteArrayToInt(workerSDKVersion));
             }
             else if (HBVEMessageType.getMessageType(type).equals(HBVEMessageType.MessageType.Worker_Result)
                     ||
                     HBVEMessageType.getMessageType(type).equals(HBVEMessageType.MessageType.Worker_Error_Result)
                     ){
-                byte[] uuid = new byte[32];
+                byte[] uuid = new byte[HBVEProtocol.Header_UUID_LEN];
                 in.readBytes(uuid);
                 header = new HBVEHeader(type, new String(uuid));
             }
 
             else if (HBVEMessageType.getMessageType(type).equals(HBVEMessageType.MessageType.Client)){
             	
-            	byte[] workerSDKVersion = new byte[3];
-                in.readBytes(workerSDKVersion);
+//            	byte[] workerSDKVersion = new byte[3];
+//              in.readBytes(workerSDKVersion);
             	
                 int id = in.readInt();
-                
-                header = new HBVEHeader(type, new String(workerSDKVersion), id);
+                header = new HBVEHeader(type, id);
             }
 
             else if (HBVEMessageType.getMessageType(type).equals(HBVEMessageType.MessageType.Error)){

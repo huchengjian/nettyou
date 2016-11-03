@@ -17,6 +17,9 @@ public class HBVEMessage implements Delayed{
 
     public boolean isTimeOut = false;
 
+    public float getWorkerSDKVersion(){
+    	return header.workerSDKVersion;
+    }
 
     public HBVEMessage(HBVEHeader h, byte[] d) {
         header = h;

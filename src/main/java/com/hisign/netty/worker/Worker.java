@@ -11,14 +11,14 @@ import com.hisign.thid.THIDFaceSDK;
 
 public class Worker {
 	
-	static{
-		int status = THIDFaceSDK.init(null, null, null);
-		if (status < 0) {
-			System.out.println("\nTHIDFaceSDK init error, error code:" + status);
-			System.exit(status);
-		}
-		System.out.println("\nTHIDFaceSDK init success, code:" + status);
-	}
+//	static{
+//		int status = THIDFaceSDK.init(null, null, null);
+//		if (status < 0) {
+//			System.out.println("\nTHIDFaceSDK init error, error code:" + status);
+//			System.exit(status);
+//		}
+//		System.out.println("\nTHIDFaceSDK init success, code:" + status);
+//	}
 
 	public static AtomicInteger workerCount = new AtomicInteger(0);
 	

@@ -79,7 +79,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
             request.writeBytes(SystemConstants.CURRENT_VERSION_BYTES);
         }
         
-        byte[] sdkVersionBytes = SystemConstants.SDKVersion.getBytes();
+        byte[] sdkVersionBytes = SystemUtil.int2byte(Float.floatToIntBits(8.3f));
         
         request.writeInt(1 + sdkVersionBytes.length);//length
         request.writeByte(HBVEMessageType.WORKER_FLAG);
@@ -172,7 +172,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 				
 				ComputeSimilarityHandler computeSimilarityHandler = new ComputeSimilarityHandler();
 				result = SystemUtil.int2byte(Float.floatToIntBits((float)0.98));
-				result = computeSimilarityHandler.run(task.data);
+//				result = computeSimilarityHandler.run(task.data);
 				return result;
 			}
 			//取模板接口
@@ -181,7 +181,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 				
 				ExtractTemplateHandler extractTemplateHandler = new ExtractTemplateHandler();
 				result = "huchengjian".getBytes();
-				result = extractTemplateHandler.run(task.data);
+//				result = extractTemplateHandler.run(task.data);
 				return result;
 			}
 			// Todo add new task type, 可以通过反射拿到处理handler
