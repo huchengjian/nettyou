@@ -32,6 +32,9 @@ public class ValidateDecoder extends ByteToMessageDecoder {
 			List<Object> out) throws Exception {
 
 		ByteBuf byteBuf = Unpooled.buffer(1024);
+
+//		byte[] bytes = new byte[in.readableBytes()];
+//		System.out.println(new String(in.getBytes(0, bytes).array()));
 		
 		//todos 判断可读字节是否够
 		

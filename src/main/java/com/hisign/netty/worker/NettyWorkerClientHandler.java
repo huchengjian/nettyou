@@ -73,13 +73,17 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 
 //        RequestService.addValidateFields(jo);
 
+		//校验头部
         if (isFirstReq) {
             request.writeBytes(SystemConstants.MAGIC_BYTES);
             request.writeBytes(SystemConstants.CURRENT_VERSION_BYTES);
         }
         
-        request.writeInt(1);//length
+        byte[] sdkVersionBytes = SystemConstants.SDKVersion.getBytes();
+        
+        request.writeInt(1 + sdkVersionBytes.length);//length
         request.writeByte(HBVEMessageType.WORKER_FLAG);
+        request.writeBytes(sdkVersionBytes);
         
         ctx.writeAndFlush(request);
     }
@@ -123,7 +127,10 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 					result,
 					task.ctx
 					);
-			logger.info("Finish task." + " messageType:" + task.header.messageType + " uuid:" + task.header.uuid + " result:" + new String(result));
+			logger.info("Finish task." +
+					" messageType:" + task.header.messageType +
+					" uuid:" + task.header.uuid +
+					" result:" + SystemUtil.bytesToHexString(result));
 			
 		} catch (HisignSDKException e) {
 			logger.error("doTask HisignSDKException");

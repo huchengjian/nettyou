@@ -1,13 +1,13 @@
 package com.hisign.netty.server;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import com.hisign.bean.ClientRequest;
-import com.hisign.bean.WorkerRequest;
 import com.hisign.constants.SystemConstants;
 import com.hisign.decoder.MessageDecoder;
 import com.hisign.decoder.ValidateDecoder;
@@ -25,21 +25,29 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
-import io.netty.handler.codec.LineBasedFrameDecoder;
 
 public class NettyServer {
 	
 	static private Logger logger = LoggerFactory.getLogger(NettyServer.class);
 	
 	public Map<String, HBVEMessage> consumingChannel;
-	public Queue<HBVEMessage> allClientQueue;
+//	public Queue<HBVEMessage> allClientQueue;
+//	public Queue<HBVEMessage> waitingQueue;
 	
-	public Queue<HBVEMessage> waitingQueue;
+	public Map<String, Queue<HBVEMessage>> allClientQueue;
+	public Map<String, Queue<HBVEMessage>> waitingQueue;
+	
+	public Map<String, Long> surviveWorker;
 	
 	NettyServer(){
 		consumingChannel = new ConcurrentHashMap<String, HBVEMessage>();
-		allClientQueue = new ConcurrentLinkedQueue<HBVEMessage>();
-		waitingQueue = new ConcurrentLinkedQueue<HBVEMessage>();
+		
+		allClientQueue = new HashMap<String, Queue<HBVEMessage>>();
+		waitingQueue = new HashMap<String, Queue<HBVEMessage>>();
+		
+		surviveWorker = new HashMap<String, Long>();
+//		allClientQueue = new ConcurrentLinkedQueue<HBVEMessage>();
+//		waitingQueue = new ConcurrentLinkedQueue<HBVEMessage>();
 	}
 	
     public void bind(int port) throws Exception {
@@ -64,7 +72,7 @@ public class NettyServer {
             workerGroup.shutdownGracefully();
         }
     }
-
+    
     private class ChildChannelHandler extends ChannelInitializer<SocketChannel> {
     	
     	NettyServer server;
@@ -84,6 +92,22 @@ public class NettyServer {
             sc.pipeline().addLast(new MessageDecoder());
             sc.pipeline().addLast(new NettyServerHandler(server));
         }
+    }
+    
+    public void addWatiWorker(HBVEMessage worker){
+    	String verion = worker.header.workerSDKVersion;
+    	if (!waitingQueue.containsKey(verion)) {
+    		waitingQueue.put(verion, new ConcurrentLinkedQueue<HBVEMessage>());
+		}
+    	waitingQueue.get(verion).add(worker);
+    }
+    
+    public void addClient(HBVEMessage client){
+    	String verion = client.header.workerSDKVersion;
+    	if (!allClientQueue.containsKey(verion)) {
+    		allClientQueue.put(verion, new ConcurrentLinkedQueue<HBVEMessage>());
+		}
+    	allClientQueue.get(verion).add(client);
     }
 
     public static void main(String[] args) throws Exception {
@@ -121,14 +145,21 @@ public class NettyServer {
         @Override
         public void run() {
             logger.info("Running shutdown sync");
-            Iterator<HBVEMessage> iterator = server.allClientQueue.iterator();
-            while (iterator.hasNext()) {  
-            	HBVEMessage message = iterator.next();
-            	System.out.println("close conn: " +  message.ctx.channel().remoteAddress() +
-                        ". Id: " + message.header.connId);
-                message.ctx.channel().close();
-            }  
-        }
+            
+			for (Entry<String, Queue<HBVEMessage>> entry : server.allClientQueue.entrySet()) {
+				
+				Queue<HBVEMessage> queue = entry.getValue();
+
+				Iterator<HBVEMessage> iterator = queue.iterator();
+				while (iterator.hasNext()) {
+					HBVEMessage message = iterator.next();
+					System.out.println("close conn: "
+							+ message.ctx.channel().remoteAddress() + ". Id: "
+							+ message.header.connId);
+					message.ctx.channel().close();
+				}
+			}
+		}
     }
 }
 
