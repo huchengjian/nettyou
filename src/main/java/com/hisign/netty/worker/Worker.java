@@ -1,7 +1,5 @@
 package com.hisign.netty.worker;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
@@ -39,6 +37,7 @@ public class Worker {
 			try {
 				port = Integer.parseInt(args[0]);
 				allServers = args[1].trim();
+				System.out.println("allServers:"+allServers);
 
 				if (args.length >= 3) {
 					SystemConstants.MaxWorker = Integer.parseInt(args[2]);
@@ -53,6 +52,7 @@ public class Worker {
 		int nameT = 0;
 		for(int i = 0; i < SystemConstants.MaxWorker; i++){
 			for (String ip : allServers.split(",")) {
+				logger.info("connect to server " + ip);
 				new Thread(new WorkerRunnable(port, ip), String.valueOf(nameT++)).start();
 			}
 		}
@@ -91,5 +91,4 @@ public class Worker {
 			e.printStackTrace();
 		}
 	}
-
 }

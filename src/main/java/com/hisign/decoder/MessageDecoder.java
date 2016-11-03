@@ -37,7 +37,11 @@ public class MessageDecoder extends ByteToMessageDecoder{
 			byte type = in.readByte();
 
             if (HBVEMessageType.getMessageType(type).equals(HBVEMessageType.MessageType.Worker_Fetch)){
-                header = new HBVEHeader(type, "");
+            	header = new HBVEHeader(type);
+            	
+                byte[] workerSDKVersion = new byte[3];
+                in.readBytes(workerSDKVersion);
+                header.workerSDKVersion = new String(workerSDKVersion);
             }
             else if (HBVEMessageType.getMessageType(type).equals(HBVEMessageType.MessageType.Worker_Result)
                     ||
@@ -49,8 +53,13 @@ public class MessageDecoder extends ByteToMessageDecoder{
             }
 
             else if (HBVEMessageType.getMessageType(type).equals(HBVEMessageType.MessageType.Client)){
+            	
+            	byte[] workerSDKVersion = new byte[3];
+                in.readBytes(workerSDKVersion);
+            	
                 int id = in.readInt();
-                header = new HBVEHeader(type, id);
+                
+                header = new HBVEHeader(type, new String(workerSDKVersion), id);
             }
 
             else if (HBVEMessageType.getMessageType(type).equals(HBVEMessageType.MessageType.Error)){
@@ -66,6 +75,7 @@ public class MessageDecoder extends ByteToMessageDecoder{
 	        
 	        out.add(hm);
 //          hm.print();
+	        
 		} catch (Exception e) {
 			System.out.println("ERROR: Message Decoder Error!");
             //Todo 返回结果

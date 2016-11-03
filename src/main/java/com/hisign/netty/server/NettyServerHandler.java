@@ -3,6 +3,8 @@ package com.hisign.netty.server;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -42,7 +44,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 		
 		timeoutQueue = new DelayQueue<HBVEMessage>();
 		timeOutChecker = new Thread(new TimeOutChecker(server, timeoutQueue));
-		timeOutChecker.start();
+//		timeOutChecker.start();
 	}
 	
 	 /**
@@ -102,20 +104,32 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
     
     public void processClientRequest(HBVEMessage clientMes){
     	
-		server.allClientQueue.add(clientMes);
+    	String version = clientMes.header.workerSDKVersion;
+    	if (!server.allClientQueue.containsKey(version)) {
+    		server.allClientQueue.put(version, new ConcurrentLinkedQueue<HBVEMessage>());
+		}
+    	
+    	Queue<HBVEMessage> clientQueue = server.allClientQueue.get(version);
+    	clientQueue.add(clientMes);
+    	
 		logger.info("新增任务，任务数:"+ server.allClientQueue.size());
-		timeoutQueue.add(clientMes);
+//		timeoutQueue.add(clientMes);
 
-		wakeupWaitingWorkIfNeed();
+		wakeupWaitingWorkIfNeed(version);
 		
 //		msg.setEndTime(SprocessClientRequestystem.currentTimeMillis() + 5000);
-//		timeoutQueue.add(clientMes);
     }
     
-	public void wakeupWaitingWorkIfNeed() {
+	public void wakeupWaitingWorkIfNeed(String version) {
 		HBVEMessage waitWorker = null;
 		while(true){
-			waitWorker = server.waitingQueue.poll();
+			
+			if (server.waitingQueue.get(version) == null) {
+				logger.info("try to wakeup worker, but no more worker in " + version + " queue!");
+				return;
+			}
+			
+			waitWorker = server.waitingQueue.get(version).poll();
 			if (waitWorker == null){
 				logger.info("try to wakeup worker, but no more worker in queue!");
 				return;
@@ -125,8 +139,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 				break;
 			}
 		}
-		
-		processWorkerRequest(waitWorker);
+		processWorkerRequest(waitWorker); 
 	}
     
 //    public void fetchTask(HBVEMessage msg){
@@ -135,12 +148,19 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 //
 //    }
     
+	/**
+	 * worker fetch task
+	 * @param worker
+	 */
     public void processWorkerRequest(HBVEMessage worker) {
 
 		HBVEMessage clientTask = null;
 		
+		String version = worker.header.workerSDKVersion;
+		
 		while(true){
-			clientTask = server.allClientQueue.poll();
+			
+			clientTask = server.allClientQueue.containsKey(version) ? server.allClientQueue.get(version).poll() : null;
 			if (clientTask == null) {
 				break;
 			}
@@ -174,8 +194,8 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 			HBVEBinaryProtocol.writeChannel(worker.ctx, buf.array());
 			
 		} else {
-            logger.info("no task now" + server.allClientQueue.size());
-			server.waitingQueue.add(worker);
+            logger.info("No task now, pending worker");
+			server.addWatiWorker(worker);
 			return;
 		}
 	}
