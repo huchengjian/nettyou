@@ -1,14 +1,14 @@
 package com.hisign.netty.worker.handler;
 
-import java.io.IOException;
-import java.util.Arrays;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hisign.exception.HisignSDKException;
+import com.hisign.exception.NoFaceDetectException;
 import com.hisign.exception.ParseParaException;
 import com.hisign.netty.worker.HisignBVESDK;
+import com.hisign.netty.worker.SDKResult;
+import com.hisign.netty.worker.SDKResult.State;
 import com.hisign.util.SystemUtil;
 
 /**
@@ -18,14 +18,20 @@ public class ComputeSimilarityHandler extends WorkerHandler{
 	
 	static private Logger logger = LoggerFactory.getLogger(ComputeSimilarityHandler.class);
 	
-	public byte[] run(byte[] data) throws HisignSDKException, IOException, ParseParaException {
-		ComputeSimilarityPara computeSimilarityPara = ComputeSimilarityPara.paraseData(data);
-		float score = compute(computeSimilarityPara.getType1(), computeSimilarityPara.getType2(),
-				computeSimilarityPara.getFace1(), computeSimilarityPara.getFace2());
-		return SystemUtil.int2byte(Float.floatToIntBits(score));
+	public SDKResult run(byte[] data) throws HisignSDKException, NoFaceDetectException, ParseParaException{
+		
+		SDKResult result = new SDKResult();
+		
+			ComputeSimilarityPara computeSimilarityPara = ComputeSimilarityPara.paraseData(data);
+			float score = compute(computeSimilarityPara.getType1(), computeSimilarityPara.getType2(),
+					computeSimilarityPara.getFace1(), computeSimilarityPara.getFace2());
+			
+			result.data = SystemUtil.int2byte(Float.floatToIntBits(score));
+			result.state = State.Success;
+		return result;
 	}
 	
-	private float compute(int type1, int type2, byte[] face1, byte[] face2) throws HisignSDKException, IOException{
+	private float compute(int type1, int type2, byte[] face1, byte[] face2) throws HisignSDKException, NoFaceDetectException{
 
     	logger.info("compute similarity!");
 
@@ -39,7 +45,17 @@ public class ComputeSimilarityHandler extends WorkerHandler{
 			temp2 = HisignBVESDK.getTemplateByImageByteArray(face2);
         }
     	
-    	logger.info("size of template:"+temp1.length + " "+temp2.length);
+    	if (temp1 == null || temp1.length == 0){
+    		logger.info("img1 extract template error!");
+    		throw new NoFaceDetectException();
+    	}
+    	if (temp2 == null || temp2.length == 0){
+    		logger.info("img2 extract template error!");
+    		throw new NoFaceDetectException();
+    	}
+    	else {
+    		logger.info("size of template:"+ temp1.length + " "+temp2.length);
+		}
     	return HisignBVESDK.compareFromTwoTemplate(temp1, temp2);
     }
 

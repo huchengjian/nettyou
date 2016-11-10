@@ -2,6 +2,7 @@ package com.hisign.netty.worker;
 
 import com.hisign.hbve.protocol.HBVEMessage;
 import com.hisign.hbve.protocol.HBVEMessageType;
+import com.hisign.netty.worker.SDKResult.State;
 import com.hisign.netty.worker.handler.ComputeSimilarityHandler;
 import com.hisign.netty.worker.handler.ExtractTemplateHandler;
 import com.hisign.util.SystemUtil;
@@ -16,10 +17,8 @@ import org.slf4j.LoggerFactory;
 
 import com.hisign.constants.SystemConstants;
 import com.hisign.exception.HisignSDKException;
+import com.hisign.exception.NoFaceDetectException;
 import com.hisign.exception.ParseParaException;
-import com.hisign.exception.WorkerException;
-
-import java.io.IOException;
 
 /**
  * 客户端处理类.
@@ -38,7 +37,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 //    /**
 //     * 连接通道.
 //     *
-//     * @param ctx
+//     * @param ctxg
 //     * @param remoteAddress
 //     * @param localAddress
 //     * @param promise
@@ -109,7 +108,6 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
     @Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) {
     	
-		
 		HBVEMessage task = (HBVEMessage) msg;
 		byte[] uuid = task.header.uuid.getBytes();
 		currUUID = uuid;
@@ -118,87 +116,81 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 		logger.info(ctx.channel().remoteAddress() + "：" + msg);
 		logger.info("worker channelRead.." + " messageType:" + task.header.messageType + " uuid:" + task.header.uuid + " para_len:" + task.data.length);
 		
-		try {
-			byte[] result = doTask(task);
-			
+		SDKResult result = null;
+		try{
+			result = doTask(task);
+		
+			logger.info("Finish task." +
+					" messageType:" + task.header.messageType +
+					" uuid:" + task.header.uuid +
+					" state:" + result.state.getValue() +
+					" result:" + SystemUtil.bytesToHexString(result.data));
+		} catch (NoFaceDetectException e) {
+			e.printStackTrace();
+			result.state= State.NotDetectFace;
+		} catch (HisignSDKException e) {
+			e.printStackTrace();
+			result.state= State.SDKError;
+		} catch (ParseParaException e) {
+			e.printStackTrace();
+			result.state= State.ParameterError;
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.info("sdk compute error");
+			result.state= State.OtherError;
+		}finally{
 			sendResult(
 					task.header.messageType, 
 					uuid,
 					result,
 					task.ctx
 					);
-			logger.info("Finish task." +
-					" messageType:" + task.header.messageType +
-					" uuid:" + task.header.uuid +
-					" result:" + SystemUtil.bytesToHexString(result));
-			
-		} catch (HisignSDKException e) {
-			logger.error("doTask HisignSDKException");
-			e.printStackTrace();
-			sendResult(HBVEMessageType.getErrorCode(e.errorId), uuid, e.getMessage().getBytes(), ctx);
-			
-		} catch (IOException e) {
-			logger.error("doTask IOException");
-			e.printStackTrace();
-		} catch (ParseParaException e) {
-			logger.error("doTask ParseParaException");
-			e.printStackTrace();
-			sendResult(HBVEMessageType.getErrorCode(e.errorId), uuid, e.getMessage().getBytes(), ctx);
-		} catch (WorkerException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-        catch (Exception e) {
-            e.printStackTrace();
-            logger.info("Error");
-        }
-		finally{
 			fetchJobFromMaster(ctx);
 		}
 	}
 
-    public byte[] doTask(HBVEMessage task) throws HisignSDKException, IOException, ParseParaException, WorkerException {
+    public SDKResult doTask(HBVEMessage task) throws HisignSDKException, NoFaceDetectException, ParseParaException{
     	
-    	byte[] result = null;
+    	SDKResult result = new SDKResult();
     	
-    	if ( HBVEMessageType.getMessageType(task.header.messageType).equals(HBVEMessageType.MessageType.Error) ) {
-			throw new WorkerException();
-		}
-    	else if (HBVEMessageType.isWorkerMess(task.header.messageType)) {
+//    	if ( HBVEMessageType.getMessageType(task.header.messageType).equals(HBVEMessageType.MessageType.Error) ) {
+//			throw new WorkerException();
+//		}
+    	if (HBVEMessageType.isWorkerMess(task.header.messageType)) {
     		
     		//计算相似度接口
 			if (HBVEMessageType.getClientMessageType(task.header.messageType)
 					.equals(HBVEMessageType.ClientMessageType.Similarity)) {
 				
 				ComputeSimilarityHandler computeSimilarityHandler = new ComputeSimilarityHandler();
-				result = SystemUtil.int2byte(Float.floatToIntBits((float)0.98));
-//				result = computeSimilarityHandler.run(task.data);
-				return result;
+				result = new SDKResult(State.Success, SystemUtil.int2byte(Float.floatToIntBits((float)0.98)));
+				result = computeSimilarityHandler.run(task.data);
 			}
 			//取模板接口
 			if (HBVEMessageType.getClientMessageType(task.header.messageType)
 					.equals(HBVEMessageType.ClientMessageType.Extract_Template)) {
 				
 				ExtractTemplateHandler extractTemplateHandler = new ExtractTemplateHandler();
-				result = "huchengjian".getBytes();
-//				result = extractTemplateHandler.run(task.data);
-				return result;
+				
+				result = new SDKResult(State.Success, "huchengjian".getBytes());
+				result = extractTemplateHandler.run(task.data);
 			}
 			// Todo add new task type, 可以通过反射拿到处理handler
 		}
     	return result;
     }
     
-    public void sendResult(byte type, byte[] uuid, byte[] data, ChannelHandlerContext ctx){
+    public void sendResult(byte type, byte[] uuid, SDKResult re, ChannelHandlerContext ctx){
     	
-    	int messageLen = 1 + uuid.length + data.length; //数据包大小。 type + uuid + data
+    	int messageLen = 1 + uuid.length + 1 + re.data.length; //数据包大小。 type + uuid + state + data
     	ByteBuf byteBuf = Unpooled.buffer(messageLen + 4);
     	
     	byteBuf.writeInt(messageLen);
     	
     	byteBuf.writeByte(type);
     	byteBuf.writeBytes(uuid);
-    	byteBuf.writeBytes(data);
+    	byteBuf.writeByte(re.state.getValue());
+    	byteBuf.writeBytes(re.data);
 
     	ctx.writeAndFlush(byteBuf);
     }
@@ -212,7 +204,8 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         logger.info("异常信息：" + cause.getMessage());
-        sendResult((byte)0xC1, currUUID, cause.getMessage().getBytes(), ctx);
+        sendResult((byte)0xC1, currUUID, new SDKResult(State.OtherError, new byte[4]), ctx);
+		fetchJobFromMaster(ctx);
     }
 
     private byte[] getHeader() {

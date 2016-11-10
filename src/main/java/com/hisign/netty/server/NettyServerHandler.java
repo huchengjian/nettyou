@@ -203,10 +203,6 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 	public void processResult(HBVEMessage workerResult){
 		logger.info("完成任务");
 
-//        if ( (workerResult.header.messageType | HBVEMessageType.EXCEPTION) != 0 ){
-//
-//        }
-
 		String uuidConnId = workerResult.header.uuid;
 		HBVEMessage clientMes = server.consumingChannel.get(String.valueOf(uuidConnId));
 		if (clientMes == null) {
@@ -214,7 +210,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 			return;
 		}
 
-        ByteBuf buf = Unpooled.buffer(1 + 4 + workerResult.data.length);
+        ByteBuf buf = Unpooled.buffer(1 + 4 + workerResult.data.length); 
         buf.writeByte(workerResult.header.messageType & (~HBVEMessageType.WORKER_FLAG));
         buf.writeInt(clientMes.header.connId);
         buf.writeBytes(workerResult.data);
