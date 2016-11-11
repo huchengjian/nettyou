@@ -7,8 +7,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.hisign.exception.HisignSDKException;
 import com.hisign.exception.NoFaceDetectException;
+import com.hisign.exception.ParseParaException;
+import com.hisign.netty.server.NettyServerHandler;
 import com.hisign.thid.FacePos;
 import com.hisign.thid.GrayImg;
 import com.hisign.thid.Point;
@@ -19,7 +24,9 @@ public class HisignBVESDK {
 	static String fileName1 = "F:\\1.jpg";
 	static String fileName2 = "F:\\2.jpg";
 	
-	public static void main(String[] args) throws IOException, HisignSDKException, NoFaceDetectException {
+	static private Logger logger = LoggerFactory.getLogger(NettyServerHandler.class);
+	
+	public static void main(String[] args) throws IOException, HisignSDKException, NoFaceDetectException, ParseParaException {
 		int init = THIDFaceSDK.init(null, null, null);
 		System.out.println("init:" + init);
 		
@@ -29,7 +36,7 @@ public class HisignBVESDK {
 		
 	}
 	
-	public static float compareFromTwoImages(byte[] img1, byte[] img2) throws HisignSDKException, NoFaceDetectException{
+	public static float compareFromTwoImages(byte[] img1, byte[] img2) throws HisignSDKException, NoFaceDetectException, ParseParaException{
 		
 		float score = (float) 0.0; 
 //		int init = THIDFaceSDK.init(null, null, null);
@@ -65,8 +72,9 @@ public class HisignBVESDK {
 	 * @param img
 	 * @return
 	 * @throws NoFaceDetectException 
+	 * @throws ParseParaException 
 	 */
-	public static byte[] getTemplateByImageByteArray(byte[] img) throws HisignSDKException, NoFaceDetectException{
+	public static byte[] getTemplateByImageByteArray(byte[] img) throws HisignSDKException, NoFaceDetectException, ParseParaException{
 
 		int tempsize = THIDFaceSDK.templateSize();
 		byte[] template = new byte[tempsize];
@@ -75,7 +83,8 @@ public class HisignBVESDK {
 		grayimg = THIDFaceSDK.readJPG(img);
 		
 		if (grayimg==null) {
-			System.out.println("Can't read grayimg, maybe not an image file");
+			logger.info("Can't read grayimg, maybe not an image file");
+			throw new ParseParaException("Can't read grayimg, maybe not an image file");
 		}
 		
 		// 获取脸部数据

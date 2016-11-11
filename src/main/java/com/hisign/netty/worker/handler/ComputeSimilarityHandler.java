@@ -31,7 +31,7 @@ public class ComputeSimilarityHandler extends WorkerHandler{
 		return result;
 	}
 	
-	private float compute(int type1, int type2, byte[] face1, byte[] face2) throws HisignSDKException, NoFaceDetectException{
+	private float compute(int type1, int type2, byte[] face1, byte[] face2) throws HisignSDKException, NoFaceDetectException, ParseParaException{
 
     	logger.info("compute similarity!");
 

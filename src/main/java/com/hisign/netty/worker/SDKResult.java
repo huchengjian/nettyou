@@ -1,5 +1,7 @@
 package com.hisign.netty.worker;
 
+import com.hisign.util.SystemUtil;
+
 public class SDKResult {
 
 	public enum State {
@@ -22,10 +24,11 @@ public class SDKResult {
 
 	public SDKResult() {
 		this.state = State.Null;
+		this.data = new byte[0];
 	}
 
 	public SDKResult(State state, byte[] data) {
 		this.state = state;
-		this.data = data;
+		this.data = new byte[4];
 	}
 }

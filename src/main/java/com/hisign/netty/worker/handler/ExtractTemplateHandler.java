@@ -31,7 +31,7 @@ public class ExtractTemplateHandler extends WorkerHandler {
 		return result;
 	}
 
-    public byte[] compute(byte[] img) throws HisignSDKException, NoFaceDetectException{
+    public byte[] compute(byte[] img) throws HisignSDKException, NoFaceDetectException, ParseParaException{
     	return HisignBVESDK.getTemplateByImageByteArray(img);
     }
 	

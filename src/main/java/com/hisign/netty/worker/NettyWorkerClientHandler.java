@@ -106,7 +106,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
      * @throws Exception
      */
     @Override
-	public void channelRead(ChannelHandlerContext ctx, Object msg) {
+	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception{
     	
 		HBVEMessage task = (HBVEMessage) msg;
 		byte[] uuid = task.header.uuid.getBytes();
@@ -116,7 +116,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 		logger.info(ctx.channel().remoteAddress() + "：" + msg);
 		logger.info("worker channelRead.." + " messageType:" + task.header.messageType + " uuid:" + task.header.uuid + " para_len:" + task.data.length);
 		
-		SDKResult result = null;
+		SDKResult result = new SDKResult();
 		try{
 			result = doTask(task);
 		
@@ -127,18 +127,22 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 					" result:" + SystemUtil.bytesToHexString(result.data));
 		} catch (NoFaceDetectException e) {
 			e.printStackTrace();
+			logger.info("channelRead NoFaceDetectException");
 			result.state= State.NotDetectFace;
 		} catch (HisignSDKException e) {
 			e.printStackTrace();
+			logger.info("channelRead HisignSDKException");
 			result.state= State.SDKError;
 		} catch (ParseParaException e) {
 			e.printStackTrace();
+			logger.info("channelRead ParseParaException");
 			result.state= State.ParameterError;
 		} catch (Exception e) {
 			e.printStackTrace();
-			logger.info("sdk compute error");
+			logger.info("channelRead otherException");
 			result.state= State.OtherError;
 		}finally{
+			logger.info("read finally");
 			sendResult(
 					task.header.messageType, 
 					uuid,
