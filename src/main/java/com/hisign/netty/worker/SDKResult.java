@@ -24,11 +24,11 @@ public class SDKResult {
 
 	public SDKResult() {
 		this.state = State.Null;
-		this.data = new byte[0];
+		this.data = new byte[4];
 	}
 
 	public SDKResult(State state, byte[] data) {
 		this.state = state;
-		this.data = new byte[4];
+		this.data = data;
 	}
 }

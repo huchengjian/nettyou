@@ -9,25 +9,15 @@ import com.hisign.netty.worker.SDKResult.State;
 
 public class ExtractTemplateHandler extends WorkerHandler {
 	
-	public SDKResult run(byte[] data){
+	public SDKResult run(byte[] data) throws HisignSDKException, NoFaceDetectException, ParseParaException{
 		SDKResult result = new SDKResult();
 		byte[] re = null;
-		
-		try {
-			ExtractTemplatePara extractTemplatePara = ExtractTemplatePara.paraseData(data);
-			re = compute(extractTemplatePara.getData());
-			result.data = re;
-			result.state = State.Success;
-		} catch (NoFaceDetectException e) {
-			e.printStackTrace();
-			result.state= State.NotDetectFace;
-		} catch (HisignSDKException e) {
-			e.printStackTrace();
-			result.state= State.SDKError;
-		} catch (ParseParaException e) {
-			e.printStackTrace();
-			result.state= State.ParameterError;
-		}
+
+		ExtractTemplatePara extractTemplatePara = ExtractTemplatePara
+				.paraseData(data);
+		re = compute(extractTemplatePara.getData());
+		result.data = re;
+		result.state = State.Success;
 		return result;
 	}
 

@@ -75,6 +75,10 @@ public class MessageDecoder extends ByteToMessageDecoder{
 	        
 	        out.add(hm);
 //          hm.print();
+	        System.out.println("Receive Message." +
+					" messageType:" + hm.header.messageType +
+					" uuid:" + hm.header.uuid
+					);
 	        
 		} catch (Exception e) {
 			System.out.println("ERROR: Message Decoder Error!");

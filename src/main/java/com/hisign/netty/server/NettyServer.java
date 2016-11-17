@@ -129,7 +129,6 @@ public class NettyServer {
         ShutdownDaemonHook shutdownHook = new ShutdownDaemonHook(server);
         Runtime.getRuntime().addShutdownHook(shutdownHook);
 
-
         server.bind(port);
     }
 

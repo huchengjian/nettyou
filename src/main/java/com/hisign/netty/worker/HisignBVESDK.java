@@ -113,6 +113,11 @@ public class HisignBVESDK {
 		} else {
 			template = null;
 		}
+		
+		if (template == null || template.length == 0) {
+			logger.info("Can't read grayimg, maybe not an image file");
+			throw new ParseParaException("Can't read grayimg, maybe not an image file");
+		}
 		return template;
 	}
 }

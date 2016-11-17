@@ -31,6 +31,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 	}
 	
 	byte[] currUUID = {};
+	int currType = 0;
 
     static private Logger logger = LoggerFactory.getLogger(NettyWorkerClientHandler.class);
 
@@ -111,7 +112,9 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 		HBVEMessage task = (HBVEMessage) msg;
 		byte[] uuid = task.header.uuid.getBytes();
 		currUUID = uuid;
+		currType = task.header.messageType;
 		task.ctx = ctx;
+		
 		
 		logger.info(ctx.channel().remoteAddress() + "：" + msg);
 		logger.info("worker channelRead.." + " messageType:" + task.header.messageType + " uuid:" + task.header.uuid + " para_len:" + task.data.length);
@@ -208,7 +211,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         logger.info("异常信息：" + cause.getMessage());
-        sendResult((byte)0xC1, currUUID, new SDKResult(State.OtherError, new byte[4]), ctx);
+        sendResult((byte)currType, currUUID, new SDKResult(State.OtherError, new byte[4]), ctx);
 		fetchJobFromMaster(ctx);
     }
 
