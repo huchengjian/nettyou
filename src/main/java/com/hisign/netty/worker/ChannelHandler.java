@@ -1,20 +1,21 @@
 package com.hisign.netty.worker;
 
 import com.hisign.decoder.MessageDecoder;
-import com.hisign.decoder.ValidateDecoder;
 
 import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
-import io.netty.handler.codec.LineBasedFrameDecoder;
-import io.netty.handler.codec.string.StringDecoder;
-import io.netty.handler.codec.string.StringEncoder;
 
 /**
  * 通道处理类.
  */
 public class ChannelHandler extends ChannelInitializer<SocketChannel> {
+	
+	public String tName;
+	
+	public ChannelHandler(String name){
+		tName = name;
+	}
 
     @Override
     protected void initChannel(SocketChannel socketChannel) throws Exception {
@@ -27,7 +28,7 @@ public class ChannelHandler extends ChannelInitializer<SocketChannel> {
         socketChannel.pipeline().addLast("lengthDecoder",
                 new LengthFieldBasedFrameDecoder(200*1024*1024,0,4,0,4));
         socketChannel.pipeline().addLast(new MessageDecoder());
-        socketChannel.pipeline().addLast(new NettyWorkerClientHandler());
+        socketChannel.pipeline().addLast(new NettyWorkerClientHandler(tName));
 
     }
 }

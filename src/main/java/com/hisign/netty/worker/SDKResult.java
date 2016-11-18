@@ -1,7 +1,5 @@
 package com.hisign.netty.worker;
 
-import com.hisign.util.SystemUtil;
-
 public class SDKResult {
 
 	public enum State {

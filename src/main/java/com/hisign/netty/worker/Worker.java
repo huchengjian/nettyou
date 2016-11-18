@@ -25,7 +25,7 @@ public class Worker {
 	static private Logger logger = LoggerFactory.getLogger(NettyServer.class);
 	
 	static String LOCALHOST = SystemConstants.NettyServerAddr;
-	static int LOCALPORT = 8089;
+	static int LOCALPORT = 8091;
 
 	public static void main(String[] args) throws InterruptedException {
 		
@@ -53,7 +53,7 @@ public class Worker {
 		for(int i = 0; i < SystemConstants.MaxWorker; i++){
 			for (String ip : allServers.split(",")) {
 				logger.info("connect to server " + ip);
-				new Thread(new WorkerRunnable(port, ip), String.valueOf(nameT++)).start();
+				new Thread(new WorkerRunnable(port, ip, String.valueOf(nameT++))).start();
 			}
 		}
 		Thread.sleep(2000);
@@ -76,7 +76,7 @@ public class Worker {
 
 				new Thread(new Runnable() {
 					public void run() {
-						NettyWorker nettyClient = new NettyWorker();
+						NettyWorker nettyClient = new NettyWorker("");
 						try {
 							nettyClient.connect("127.0.0.1", SystemConstants.NettyServerPort);
 							return;

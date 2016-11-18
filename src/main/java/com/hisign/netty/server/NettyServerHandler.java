@@ -79,7 +79,6 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
     }
     
     public void process(HBVEMessage req){
-    	System.out.println("log stuff");
     	
     	byte type = req.header.messageType;
     	
@@ -93,7 +92,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
     	else if (HBVEMessageType.getMessageType(type).equals(HBVEMessageType.MessageType.Worker_Fetch)){
 			//worker fetch task, 总是取最大的version的worker，目前只支持sdk的升级，sdk的降级还未实现
     		//即需要降级时可能会导致所有的client请求失效，解决方法：在maxversion的worker隔一段时间未出现时，将maxversion改成第二大的worker
-    		System.out.println("current max version " + NettyServer.maxWorkerVersion + " Worker version " + req.getWorkerSDKVersion());
+    		logger.info("current max version " + NettyServer.maxWorkerVersion + " Worker version " + req.getWorkerSDKVersion());
     		if (req.getWorkerSDKVersion() > NettyServer.maxWorkerVersion.get()) {
     			NettyServer.maxWorkerVersion.set(req.getWorkerSDKVersion());
 			}
@@ -214,8 +213,6 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
         buf.writeByte(workerResult.header.messageType & (~HBVEMessageType.WORKER_FLAG));
         buf.writeInt(clientMes.header.connId);
         buf.writeBytes(workerResult.data);
-
-        System.out.println("result Len : "+ buf.array().length);
 
         HBVEBinaryProtocol.writeChannel(clientMes.ctx, buf.array());
 

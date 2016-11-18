@@ -25,30 +25,18 @@ import com.hisign.exception.ParseParaException;
  */
 public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 	
+	public String tName;
+	
 	boolean isFirstReq = true;
 	
-	public NettyWorkerClientHandler() {
+	public NettyWorkerClientHandler(String name){
+		tName = name;
 	}
 	
 	byte[] currUUID = {};
 	int currType = 0;
 
     static private Logger logger = LoggerFactory.getLogger(NettyWorkerClientHandler.class);
-
-//    /**
-//     * 连接通道.
-//     *
-//     * @param ctxg
-//     * @param remoteAddress
-//     * @param localAddress
-//     * @param promise
-//     * @throws Exception
-//     */
-//    @Override
-//    public void connect(ChannelHandlerContext ctx, SocketAddress remoteAddress, SocketAddress localAddress, ChannelPromise promise) throws Exception {
-//        logger.info(remoteAddress + "：连接通道");
-//        super.connect(ctx, remoteAddress, localAddress, promise);
-//    }
 
     /**
      * 活跃通道.
@@ -62,7 +50,6 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 //        super.channelActive(ctx);
 
         fetchJobFromMaster(ctx);
-        
         isFirstReq = false;
     }
 
@@ -117,13 +104,14 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 		
 		
 		logger.info(ctx.channel().remoteAddress() + "：" + msg);
-		logger.info("worker channelRead.." + " messageType:" + task.header.messageType + " uuid:" + task.header.uuid + " para_len:" + task.data.length);
+		logger.info(tName + " thread. worker channelRead.." + " messageType:" + 
+				task.header.messageType + " uuid:" + task.header.uuid + " para_len:" + task.data.length);
 		
 		SDKResult result = new SDKResult();
 		try{
 			result = doTask(task);
 		
-			logger.info("Finish task." +
+			logger.info(tName + " thread. Finish task." +
 					" messageType:" + task.header.messageType +
 					" uuid:" + task.header.uuid +
 					" state:" + result.state.getValue() +
@@ -145,7 +133,6 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 			logger.info("channelRead otherException");
 			result.state= State.OtherError;
 		}finally{
-			logger.info("read finally");
 			sendResult(
 					task.header.messageType, 
 					uuid,
@@ -160,9 +147,6 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
     	
     	SDKResult result = new SDKResult();
     	
-//    	if ( HBVEMessageType.getMessageType(task.header.messageType).equals(HBVEMessageType.MessageType.Error) ) {
-//			throw new WorkerException();
-//		}
     	if (HBVEMessageType.isWorkerMess(task.header.messageType)) {
     		
     		//计算相似度接口

@@ -77,9 +77,9 @@ public class MessageDecoder extends ByteToMessageDecoder{
 //          hm.print();
 	        System.out.println("Receive Message." +
 					" messageType:" + hm.header.messageType +
-					" uuid:" + hm.header.uuid
+					" uuid:" + hm.header.uuid +
+					" data:" + SystemUtil.bytesToHexString(data)
 					);
-	        
 		} catch (Exception e) {
 			System.out.println("ERROR: Message Decoder Error!");
             //Todo 返回结果

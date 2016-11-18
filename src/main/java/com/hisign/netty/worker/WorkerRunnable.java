@@ -6,23 +6,24 @@ import org.slf4j.LoggerFactory;
 
 public class WorkerRunnable implements Runnable {
 	
-	public static String name;
+	public String name;
 
 	public int serverPort;
 	public String serverIp;
 	
 	static private Logger logger = LoggerFactory.getLogger(WorkerRunnable.class);
 	
-	WorkerRunnable(int port, String ip){
+	WorkerRunnable(int port, String ip, String name){
 		serverPort = port;
 		serverIp = ip;
+		this.name = name;
 	}
 	
 	public void run() {
 		while (true) {
 			try {
 				System.out.printf("Thread %s Connect %s:%d \n", Thread.currentThread().getName(), serverIp, serverPort);
-				NettyWorker worker = new NettyWorker();
+				NettyWorker worker = new NettyWorker(name);
 				worker.connect(serverIp, serverPort);
 			} catch (Exception e) {
 //				e.printStackTrace();

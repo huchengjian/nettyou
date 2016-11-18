@@ -13,6 +13,12 @@ import io.netty.channel.socket.nio.NioSocketChannel;
  * 客户端类.
  */
 public class NettyWorker {
+	
+	String tName;
+	
+	public NettyWorker(String tName){
+		this.tName = tName;
+	}
 
 	public void connect(String host, int port) throws Exception {
 
@@ -30,7 +36,7 @@ public class NettyWorker {
 			// 配置通道参数：tcp不延迟
 			b.option(ChannelOption.TCP_NODELAY, true);
 			// 设置通道处理
-			b.handler(new ChannelHandler());
+			b.handler(new ChannelHandler(tName));
 			// 发起异步链接，等待输入参数
 
 			ChannelFuture f = b.connect(host, port).sync();
@@ -49,7 +55,7 @@ public class NettyWorker {
 	}
 
 	public static void main(String[] args) {
-		NettyWorker nettyClient = new NettyWorker();
+		NettyWorker nettyClient = new NettyWorker("");
 		try {
 			nettyClient.connect("127.0.0.1", SystemConstants.NettyServerPort);
 		} catch (Exception e) {
