@@ -21,7 +21,6 @@ public abstract class HBVEProcesser {
 //    	byteBuf.writeBytes(SystemConstants.CURRENT_VERSION_BYTES);
 //    	
 //    	byteBuf.writeInt(data.length);
-//		System.out.println(data.length);
 //		byteBuf.writeBytes(data);
 //    	
 //    	ctx.writeAndFlush(byteBuf);

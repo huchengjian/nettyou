@@ -205,7 +205,6 @@ public class SHA1 {
 //    }
 
     public static String sha1(byte[] input) {
-//    	System.out.println("sha star" + System.currentTimeMillis());
         MessageDigest mDigest = null;
 		try {
 			mDigest = MessageDigest.getInstance("SHA1");
@@ -218,7 +217,6 @@ public class SHA1 {
         for (int i = 0; i < result.length; i++) {
             sb.append(Integer.toString((result[i] & 0xff) + 0x100, 16).substring(1));
         }
-//        System.out.println("sha over" + System.currentTimeMillis());
         return sb.toString();
     }
     

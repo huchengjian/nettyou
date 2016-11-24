@@ -11,7 +11,7 @@ public class WorkerRunnable implements Runnable {
 	public int serverPort;
 	public String serverIp;
 	
-	static private Logger logger = LoggerFactory.getLogger(WorkerRunnable.class);
+	public static Logger logger = LoggerFactory.getLogger(WorkerRunnable.class);
 	
 	WorkerRunnable(int port, String ip, String name){
 		serverPort = port;
@@ -22,12 +22,12 @@ public class WorkerRunnable implements Runnable {
 	public void run() {
 		while (true) {
 			try {
-				System.out.printf("Thread %s Connect %s:%d \n", Thread.currentThread().getName(), serverIp, serverPort);
+				logger.info("Thread {} Connect {}:{} \n", name, serverIp, serverPort);
 				NettyWorker worker = new NettyWorker(name);
 				worker.connect(serverIp, serverPort);
 			} catch (Exception e) {
 //				e.printStackTrace();
-				System.out.printf("Thread %s Connect %s:%d error, sleep 8s and try again.\n", Thread.currentThread().getName(), serverIp, serverPort);
+				logger.info("Thread {} Connect {}:{} error, sleep 8s and try again.\n", Thread.currentThread().getName(), serverIp, serverPort);
 				try {
 					Thread.sleep(3000);
 				} catch (InterruptedException e1) {

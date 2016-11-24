@@ -150,11 +150,7 @@ public class SystemUtil {
 	}  
 	
 	public static void main(String[] args) {
-		System.out.println( byte2float( float2byte((float)0.783242), 0));
-		System.out.println(bytesToHexString(int2byte(1)));
 		Integer s;
 		int x = Float.floatToIntBits((float) 9.375);
-		
-		System.out.println(bytesToHexString(int2byte(x)));
 	}
 }

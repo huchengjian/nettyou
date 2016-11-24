@@ -4,6 +4,9 @@ import com.hisign.util.SystemUtil;
 
 import java.util.Arrays;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class WorkerResultRequest extends Request {
 
 	public int messageType = 3;
@@ -11,6 +14,8 @@ public class WorkerResultRequest extends Request {
 	private int status;
 	private String statusMessage;
 	private String uuid_connId;
+	
+	static private Logger logger = LoggerFactory.getLogger(WorkerResultRequest.class);
 	
 	public WorkerResultRequest(){
 		
@@ -21,7 +26,7 @@ public class WorkerResultRequest extends Request {
 	}
 	
 	public void parsePara(byte[] para, int skip){
-		System.out.println("get result length:" + para.length);
+		logger.info("Get result length:" + para.length);
 		int point = 0 + skip;
 		status = SystemUtil.singleByteToInt(para[point]);
 		point += 1;

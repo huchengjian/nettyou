@@ -8,11 +8,17 @@ import java.util.Arrays;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.parser.ParseContext;
+import com.hisign.netty.server.NettyServer;
 import com.hisign.util.SystemUtil;
 
 public class ClientRequest extends Request {
+	
+	static private Logger logger = LoggerFactory.getLogger(ClientRequest.class);
 	
 	private int conn_id;
 	private int type1;
@@ -62,7 +68,7 @@ public class ClientRequest extends Request {
 	
 	@Override
 	public String toString() {
-		System.out.println(message_type + " " + conn_id + " " + 
+		logger.info(message_type + " " + conn_id + " " + 
 				type1 + " " + type2 + " " + SystemUtil.bytesToHexString(face1) + " "
 				+ SystemUtil.bytesToHexString(face2));
 		

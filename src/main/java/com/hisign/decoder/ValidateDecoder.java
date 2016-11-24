@@ -33,11 +33,8 @@ public class ValidateDecoder extends ByteToMessageDecoder {
 
 		ByteBuf byteBuf = Unpooled.buffer(1024);
 
-//		byte[] bytes = new byte[in.readableBytes()];
-//		System.out.println(new String(in.getBytes(0, bytes).array()));
 		
 		//todos 判断可读字节是否够
-		
 		if(!isValidated){
 			
 			if (in.readableBytes() < 8) {

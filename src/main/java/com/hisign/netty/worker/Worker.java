@@ -10,19 +10,19 @@ import com.hisign.netty.server.NettyServer;
 import com.hisign.thid.THIDFaceSDK;
 
 public class Worker {
+	static private Logger logger = LoggerFactory.getLogger(NettyServer.class);
 	
 	static{
 		int status = THIDFaceSDK.init(null, null, null);
 		if (status < 0) {
-			System.out.println("\nTHIDFaceSDK init error, error code:" + status);
+			logger.info("\nTHIDFaceSDK init error, error code:" + status);
 			System.exit(status);
 		}
-		System.out.println("\nTHIDFaceSDK init success, code:" + status);
+		logger.info("\nTHIDFaceSDK init success, code:" + status);
 	}
 
 	public static AtomicInteger workerCount = new AtomicInteger(0);
 	
-	static private Logger logger = LoggerFactory.getLogger(NettyServer.class);
 	
 	static String LOCALHOST = SystemConstants.NettyServerAddr;
 	static int LOCALPORT = 8091;
@@ -37,7 +37,7 @@ public class Worker {
 			try {
 				port = Integer.parseInt(args[0]);
 				allServers = args[1].trim();
-				System.out.println("allServers:"+allServers);
+				logger.info("allServers:"+allServers);
 
 				if (args.length >= 3) {
 					SystemConstants.MaxWorker = Integer.parseInt(args[2]);
@@ -72,7 +72,7 @@ public class Worker {
 				}
 
 				workerCount.getAndIncrement();
-				System.out.println("新建任务,workerCount: " + workerCount.get());
+				logger.info("new task, workerCount: " + workerCount.get());
 
 				new Thread(new Runnable() {
 					public void run() {

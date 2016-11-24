@@ -86,7 +86,7 @@ public class NettyServer {
     	
         @Override
         protected void initChannel(SocketChannel sc) throws Exception {
-            System.out.println("server initChannel..");
+            logger.info("server initChannel..");
             sc.pipeline().addLast(new ValidateDecoder());
 //            sc.pipeline().addLast(new LineBasedFrameDecoder(1024*1000000));
             sc.pipeline().addLast("lengthDecoder", 
@@ -115,7 +115,7 @@ public class NettyServer {
 
     public static void main(String[] args) throws Exception {
 
-        System.out.println(System.getProperty("user.dir"));
+        logger.info(System.getProperty("user.dir"));
         int port = SystemConstants.NettyServerPort;
         if (args != null && args.length > 0) {
             try {
@@ -153,7 +153,7 @@ public class NettyServer {
 			Iterator<HBVEMessage> iterator = queue.iterator();
 			while (iterator.hasNext()) {
 				HBVEMessage message = iterator.next();
-				System.out.println("close conn: "
+				logger.info("close conn: "
 						+ message.ctx.channel().remoteAddress() + ". Id: "
 						+ message.header.connId);
 				message.ctx.channel().close();

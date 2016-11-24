@@ -3,9 +3,14 @@ package com.hisign.hbve.protocol;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.netty.channel.ChannelHandlerContext;
 
 public class HBVEMessage implements Delayed{
+	
+	static private Logger logger = LoggerFactory.getLogger(HBVEMessage.class);
 
     public HBVEHeader header;
     public byte[] data;
@@ -28,7 +33,7 @@ public class HBVEMessage implements Delayed{
     }
 
     public void print() {
-        System.out.println("type + dataLen:" + (int)header.messageType + " " + data.length);
+    	logger.info("type + dataLen:" + (int)header.messageType + " " + data.length);
     }
 
     public int compareTo(Delayed o) {
@@ -49,7 +54,7 @@ public class HBVEMessage implements Delayed{
     }
 
 	public void setIsTimeOut(){
-		System.out.println("Message timeout.");
+		logger.info("Message timeout.");
         isTimeOut = true;
     }
 }

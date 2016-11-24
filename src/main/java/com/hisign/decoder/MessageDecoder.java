@@ -3,6 +3,9 @@ package com.hisign.decoder;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.hisign.hbve.protocol.HBVEHeader;
 import com.hisign.hbve.protocol.HBVEMessage;
 import com.hisign.hbve.protocol.HBVEMessageType;
@@ -15,6 +18,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 
 public class MessageDecoder extends ByteToMessageDecoder{
+	
+	static private Logger logger = LoggerFactory.getLogger(MessageDecoder.class);
 
     /**
      * 取出头部和数据字段, client头部为1+4字节, worker头部为1+32字节, 剩余为data数据
@@ -57,15 +62,13 @@ public class MessageDecoder extends ByteToMessageDecoder{
             	
 //            	byte[] workerSDKVersion = new byte[3];
 //              in.readBytes(workerSDKVersion);
-            	
                 int id = in.readInt();
                 header = new HBVEHeader(type, id);
             }
 
             else if (HBVEMessageType.getMessageType(type).equals(HBVEMessageType.MessageType.Error)){
-                System.out.println("error message");
+            	logger.info("error message");
                 byte[] data = new byte[in.readableBytes()];
-                System.out.println(in.readBytes(data));
             }
 
 			byte[] data = new byte[in.readableBytes()];
@@ -75,13 +78,13 @@ public class MessageDecoder extends ByteToMessageDecoder{
 	        
 	        out.add(hm);
 //          hm.print();
-	        System.out.println("Receive Message." +
+	        logger.info("Receive Message." +
 					" messageType:" + hm.header.messageType +
-					" uuid:" + hm.header.uuid +
-					" data:" + SystemUtil.bytesToHexString(data)
+					" uuid:" + hm.header.connId +
+					" data_len:" + data.length
 					);
 		} catch (Exception e) {
-			System.out.println("ERROR: Message Decoder Error!");
+			logger.info("ERROR: Message Decoder Error!");
             //Todo 返回结果
 			e.printStackTrace();
 		}

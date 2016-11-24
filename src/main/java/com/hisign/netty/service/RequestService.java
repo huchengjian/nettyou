@@ -5,12 +5,17 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.alibaba.fastjson.JSONObject;
 import com.hisign.bean.Message;
 import com.hisign.constants.SystemConstants;
 import com.hisign.util.SHA1;
 
 public class RequestService {
+	
+	static private Logger logger = LoggerFactory.getLogger(RequestService.class);
 	
 	
 	/**
@@ -42,8 +47,6 @@ public class RequestService {
 	}
 	
 	public static void main(String[] args) {
-		System.out.println(System.currentTimeMillis());
 		addValidateFields(new JSONObject());
-		System.out.println(System.currentTimeMillis());
 	}
 }

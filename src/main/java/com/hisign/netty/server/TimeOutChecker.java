@@ -26,7 +26,6 @@ public class TimeOutChecker implements Runnable {
         logger.info("timeout checkouter start");
 		while(running){
             try {
-//                System.out.println("检查ing");
 				HBVEMessage conn = timeOutQueue.take();
                 timeOutProcess(conn);
             } catch (InterruptedException e) {
@@ -37,7 +36,7 @@ public class TimeOutChecker implements Runnable {
 	}
 	
 	private void timeOutProcess(HBVEMessage conn){
-		System.out.println("find timeout message." + timeOutQueue.size());
+		logger.info("find timeout message." + timeOutQueue.size());
 		conn.setIsTimeOut();
 	}
 }

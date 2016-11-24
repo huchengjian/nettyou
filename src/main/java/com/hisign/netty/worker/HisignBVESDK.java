@@ -28,11 +28,10 @@ public class HisignBVESDK {
 	
 	public static void main(String[] args) throws IOException, HisignSDKException, NoFaceDetectException, ParseParaException {
 		int init = THIDFaceSDK.init(null, null, null);
-		System.out.println("init:" + init);
+		logger.info("init:" + init);
 		
 		byte[] i1 = getTemplateByImageByteArray(readFile(new File(fileName1)));
 		byte[] i2 = getTemplateByImageByteArray(readFile(new File(fileName2)));
-		System.out.println(compareFromTwoTemplate(i1, i2));
 		
 	}
 	
@@ -50,12 +49,10 @@ public class HisignBVESDK {
 	
 	public static float compareFromTwoTemplate(byte[] temp1, byte[] temp2){
 		
-//		System.out.println("init value:" +THIDFaceSDK.init(null, null, null));
-		
 		float score = (float) 0.0; 
 		
 		score = THIDFaceSDK.verify(temp1, temp2);
-		System.out.println("compare score:" + score);
+		logger.info("compare score:" + score);
 		return score;
 	}
 	
@@ -90,10 +87,10 @@ public class HisignBVESDK {
 		// 获取脸部数据
 		List<FacePos> facePoses = new ArrayList<FacePos>();
 		int detect = THIDFaceSDK.detect(grayimg, null, null, 1, facePoses);
-		System.out.println("detect返回值：" + detect);
+		logger.info("detect返回值：" + detect);
 		
 		if(detect < 0){
-			System.out.println("not detect face error");
+			logger.info("not detect face error");
 			throw new NoFaceDetectException();
 		}
 		
@@ -105,7 +102,7 @@ public class HisignBVESDK {
 			FacePos facePos = facePoses.get(0);
 			align = THIDFaceSDK.alignByFace(grayimg, facePos.rect, points);
 		}
-		System.out.println("align返回值：" + align);
+		logger.info("align返回值：" + align);
 
 		// 获取模板数据
 		if (facePoses.size() > 0) {

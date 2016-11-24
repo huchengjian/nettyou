@@ -9,8 +9,8 @@ public class SystemConstants {
 	
 	public static String SDKVersion = "8.3";
 	
-	public static int MaxWorker = 1;
-	public static int NettyServerPort = 8089;
+	public static int MaxWorker = 3;
+	public static int NettyServerPort = 8091;
 	public static String NettyServerAddr = "127.0.0.1";
 	
 	public static String TOKEN = "HISIGN_API_TOKEN";
@@ -28,11 +28,5 @@ public class SystemConstants {
 	public static int UUIDLength = 32;
 	
 	public static void main(String[] args) {
-		System.out.println("fdsf1".hashCode());
-		System.out.println("fds".hashCode());
-		System.out.println(10 - Integer.MAX_VALUE);
-		
-		System.out.println(UUID.randomUUID());
-		System.out.println(UUID.randomUUID().toString().replace("-", "").getBytes().toString());
 	}
 }

@@ -54,6 +54,8 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
     }
 
     public void fetchJobFromMaster(ChannelHandlerContext ctx){
+    	
+    	logger.info(tName + " FetchJobFromMaster");
 
         ByteBuf request;
         request = Unpooled.buffer(20);
