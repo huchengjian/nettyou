@@ -22,12 +22,11 @@ public class WorkerRunnable implements Runnable {
 	public void run() {
 		while (true) {
 			try {
-				logger.info("Thread {} Connect {}:{} \n", name, serverIp, serverPort);
+				logger.info("Thread " + name + " Connect " + serverIp + ":" + serverPort + "\n");
 				NettyWorker worker = new NettyWorker(name);
 				worker.connect(serverIp, serverPort);
 			} catch (Exception e) {
-//				e.printStackTrace();
-				logger.info("Thread {} Connect {}:{} error, sleep 8s and try again.\n", Thread.currentThread().getName(), serverIp, serverPort);
+				logger.info("Thread " +Thread.currentThread().getName() + " Connect " + serverIp + ":" + serverPort +" error, sleep 8s and try again.\n");
 				try {
 					Thread.sleep(3000);
 				} catch (InterruptedException e1) {

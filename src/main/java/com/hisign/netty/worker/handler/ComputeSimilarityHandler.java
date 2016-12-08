@@ -1,14 +1,20 @@
 package com.hisign.netty.worker.handler;
 
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hisign.exception.HisignSDKException;
 import com.hisign.exception.NoFaceDetectException;
 import com.hisign.exception.ParseParaException;
+import com.hisign.netty.worker.ExtractTemplateRunnable;
 import com.hisign.netty.worker.HisignBVESDK;
 import com.hisign.netty.worker.SDKResult;
 import com.hisign.netty.worker.SDKResult.State;
+import com.hisign.netty.worker.Worker;
 import com.hisign.util.SystemUtil;
 
 /**
@@ -35,16 +41,59 @@ public class ComputeSimilarityHandler extends WorkerHandler{
 
     	logger.info("compute similarity!");
 
+		Lock lock1 = new ReentrantLock();
+		Lock lock2 = new ReentrantLock();
+		Condition c1 = lock1.newCondition();
+		Condition c2 = lock2.newCondition();
+		
 		byte[] temp1 = face1, temp2 = face2;
+
+		ExtractTemplateRunnable.Task task1 = new ExtractTemplateRunnable.Task(face1, temp1, c1, lock1);
+		ExtractTemplateRunnable.Task task2 = new ExtractTemplateRunnable.Task(face2, temp2, c2, lock2);
     	if (type1 == 1) {
     		//图片數據
-			temp1 = HisignBVESDK.getTemplateByImageByteArray(face1);
+    		task1.isFinish = false;
+    		Worker.exetractTemplatePool.execute(new ExtractTemplateRunnable(task1));
+//			temp1 = HisignBVESDK.getTemplateByImageByteArray(face1);
         }
     	if (type2 == 1) {
     		//图片數據
-			temp2 = HisignBVESDK.getTemplateByImageByteArray(face2);
+    		task2.isFinish = false;
+    		Worker.exetractTemplatePool.execute(new ExtractTemplateRunnable(task2));
+//			temp2 = HisignBVESDK.getTemplateByImageByteArray(face2);
         }
     	
+    	lock1.lock();
+    	while (!task1.isFinish) {
+    		try {
+    			logger.info("wait1");
+				task1.con.await();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    		finally{
+    			lock1.unlock();
+    		}
+		}
+    	logger.info("finish1");
+    	
+    	lock2.lock();
+    	while (!task2.isFinish) {
+    		logger.info("wait1");
+    		try {
+				task2.con.await();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+    		finally{
+    			lock2.unlock();
+    		}
+		}
+    	logger.info("finish2");
+    	
+    	temp1 = task1.template;
+    	temp2 = task2.template;
     	if (temp1 == null || temp1.length == 0){
     		logger.info("img1 extract template error!");
     		throw new NoFaceDetectException();

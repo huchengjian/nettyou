@@ -1,5 +1,7 @@
 package com.hisign.netty.worker;
 
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
@@ -10,6 +12,9 @@ import com.hisign.netty.server.NettyServer;
 import com.hisign.thid.THIDFaceSDK;
 
 public class Worker {
+	
+	public static Executor exetractTemplatePool;
+	
 	static private Logger logger = LoggerFactory.getLogger(NettyServer.class);
 	
 	static{
@@ -35,17 +40,16 @@ public class Worker {
 
 		if (args != null && args.length >= 2) {
 			try {
-				port = Integer.parseInt(args[0]);
-				allServers = args[1].trim();
+				allServers = args[0].trim();
 				logger.info("allServers:"+allServers);
-
-				if (args.length >= 3) {
-					SystemConstants.MaxWorker = Integer.parseInt(args[2]);
-				}
+				port = Integer.parseInt(args[1]);
+				SystemConstants.MaxWorker = Integer.parseInt(args[2]);
 			} catch (NumberFormatException e) {
 				logger.error("Integer parse error. use integer value.");
 			}
 		}
+
+		exetractTemplatePool = Executors.newFixedThreadPool(SystemConstants.MaxWorker);
 
 		logger.info("Worker start. Thread count: " + SystemConstants.MaxWorker);
 		
