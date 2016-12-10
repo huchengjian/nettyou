@@ -1,5 +1,7 @@
 package com.hisign.netty.worker;
 
+import java.io.IOException;
+
 import com.hisign.hbve.protocol.HBVEMessage;
 import com.hisign.hbve.protocol.HBVEMessageType;
 import com.hisign.netty.worker.SDKResult.State;
@@ -145,7 +147,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 		}
 	}
 
-    public SDKResult doTask(HBVEMessage task) throws HisignSDKException, NoFaceDetectException, ParseParaException{
+    public SDKResult doTask(HBVEMessage task) throws HisignSDKException, NoFaceDetectException, ParseParaException, IOException{
     	
     	SDKResult result = new SDKResult();
     	

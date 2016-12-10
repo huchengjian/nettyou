@@ -1,5 +1,7 @@
 package com.hisign.util;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
@@ -153,4 +155,11 @@ public class SystemUtil {
 		Integer s;
 		int x = Float.floatToIntBits((float) 9.375);
 	}
+	public static void createFile(String path, byte[] content) throws IOException {  
+		  
+        FileOutputStream fos = new FileOutputStream(path);  
+  
+        fos.write(content);  
+        fos.close();  
+ }  
 }

@@ -1,5 +1,7 @@
 package com.hisign.netty.worker;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 
@@ -43,16 +45,24 @@ public class ExtractTemplateRunnable implements Runnable {
 		task.lock.lock();
 		try {
 			logger.info("Running task.");
+			
 			task.template = HisignBVESDK.getTemplateByImageByteArray(task.img);
 			task.status = 0;
 		} catch (HisignSDKException e) {
 			task.status = -1;
+			task.template = null;
 			e.printStackTrace();
 		} catch (NoFaceDetectException e) {
 			task.status = -2;
+			task.template = null;
 			e.printStackTrace();
 		} catch (ParseParaException e) {
 			task.status = -3;
+			task.template = null;
+			e.printStackTrace();
+		} catch (IOException e) {
+			task.status = -4;
+			task.template = null;
 			e.printStackTrace();
 		}
 		finally{

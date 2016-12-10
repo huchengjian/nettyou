@@ -1,5 +1,7 @@
 package com.hisign.netty.worker.handler;
 
+import java.io.IOException;
+
 import com.hisign.exception.HisignSDKException;
 import com.hisign.exception.NoFaceDetectException;
 import com.hisign.exception.ParseParaException;
@@ -9,7 +11,7 @@ import com.hisign.netty.worker.SDKResult.State;
 
 public class ExtractTemplateHandler extends WorkerHandler {
 	
-	public SDKResult run(byte[] data) throws HisignSDKException, NoFaceDetectException, ParseParaException{
+	public SDKResult run(byte[] data) throws HisignSDKException, NoFaceDetectException, ParseParaException, IOException{
 		SDKResult result = new SDKResult();
 		byte[] re = null;
 
@@ -21,7 +23,7 @@ public class ExtractTemplateHandler extends WorkerHandler {
 		return result;
 	}
 
-    public byte[] compute(byte[] img) throws HisignSDKException, NoFaceDetectException, ParseParaException{
+    public byte[] compute(byte[] img) throws HisignSDKException, NoFaceDetectException, ParseParaException, IOException{
     	return HisignBVESDK.getTemplateByImageByteArray(img);
     }
 	

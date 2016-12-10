@@ -1,5 +1,6 @@
 package com.hisign.netty.worker.handler;
 
+import java.io.IOException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -24,7 +25,7 @@ public class ComputeSimilarityHandler extends WorkerHandler{
 	
 	static private Logger logger = LoggerFactory.getLogger(ComputeSimilarityHandler.class);
 	
-	public SDKResult run(byte[] data) throws HisignSDKException, NoFaceDetectException, ParseParaException{
+	public SDKResult run(byte[] data) throws HisignSDKException, NoFaceDetectException, ParseParaException, IOException{
 		
 		SDKResult result = new SDKResult();
 		
@@ -37,7 +38,7 @@ public class ComputeSimilarityHandler extends WorkerHandler{
 		return result;
 	}
 	
-	private float compute(int type1, int type2, byte[] face1, byte[] face2) throws HisignSDKException, NoFaceDetectException, ParseParaException{
+	private float compute(int type1, int type2, byte[] face1, byte[] face2) throws HisignSDKException, NoFaceDetectException, ParseParaException, IOException{
 
     	logger.info("compute similarity!");
 
@@ -48,6 +49,8 @@ public class ComputeSimilarityHandler extends WorkerHandler{
 		
 		byte[] temp1 = face1, temp2 = face2;
 
+		logger.info("size of two bytes:" + face1.length + ":" + face2.length);
+		
 		ExtractTemplateRunnable.Task task1 = new ExtractTemplateRunnable.Task(face1, temp1, c1, lock1);
 		ExtractTemplateRunnable.Task task2 = new ExtractTemplateRunnable.Task(face2, temp2, c2, lock2);
     	if (type1 == 1) {
