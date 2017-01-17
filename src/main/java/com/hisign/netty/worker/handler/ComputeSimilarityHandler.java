@@ -59,12 +59,18 @@ public class ComputeSimilarityHandler extends WorkerHandler{
     		Worker.exetractTemplatePool.execute(new ExtractTemplateRunnable(task1));
 //			temp1 = HisignBVESDK.getTemplateByImageByteArray(face1);
         }
+    	else {
+    		temp1 = face1;
+		}
     	if (type2 == 1) {
     		//图片數據
     		task2.isFinish = false;
     		Worker.exetractTemplatePool.execute(new ExtractTemplateRunnable(task2));
 //			temp2 = HisignBVESDK.getTemplateByImageByteArray(face2);
         }
+    	else {
+    		temp2 = face2;
+		}
     	
     	lock1.lock();
     	while (!task1.isFinish) {
@@ -76,27 +82,27 @@ public class ComputeSimilarityHandler extends WorkerHandler{
 				e.printStackTrace();
 			}
     		finally{
+    			logger.info("Extract template finish1");
     			lock1.unlock();
     		}
 		}
-    	logger.info("finish1");
+    	temp1 = task1.template;
     	
     	lock2.lock();
     	while (!task2.isFinish) {
-    		logger.info("wait1");
     		try {
+    			logger.info("wait2");
 				task2.con.await();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
     		finally{
+    			logger.info("Extract template finish2");
     			lock2.unlock();
     		}
 		}
-    	logger.info("finish2");
-    	
-    	temp1 = task1.template;
     	temp2 = task2.template;
+    	
     	if (temp1 == null || temp1.length == 0){
     		logger.info("img1 extract template error!");
     		throw new NoFaceDetectException();
@@ -105,8 +111,10 @@ public class ComputeSimilarityHandler extends WorkerHandler{
     		logger.info("img2 extract template error!");
     		throw new NoFaceDetectException();
     	}
-    	else {
-    		logger.info("size of template:"+ temp1.length + " "+temp2.length);
+    	logger.info("size of template:"+ temp1.length + " "+temp2.length);
+    	if (temp1.length != temp2.length) {
+    		logger.info("Templates size are not same!");
+    		throw new NoFaceDetectException();
 		}
     	return HisignBVESDK.compareFromTwoTemplate(temp1, temp2);
     }

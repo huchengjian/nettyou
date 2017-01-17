@@ -41,6 +41,19 @@
 			<artifactId>fastjson</artifactId>
 			<version>1.2.6</version>
 		</dependency>
+
+	<dependency>
+		<groupId>org.ini4j</groupId>
+		<artifactId>ini4j</artifactId>
+		<version>0.5.2</version>
+	</dependency>
+	
+	<dependency>
+			<groupId>com.tiandetech.core</groupId>
+			<artifactId>tiandechain</artifactId>
+			<version>1.0</version>
+	</dependency>
+	
     </dependencies>
 
     <build>

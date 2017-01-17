@@ -44,7 +44,7 @@ public class ExtractTemplateRunnable implements Runnable {
 	public void run() {
 		task.lock.lock();
 		try {
-			logger.info("Running task.");
+			logger.info("Running extract template task.");
 			
 			task.template = HisignBVESDK.getTemplateByImageByteArray(task.img);
 			task.status = 0;

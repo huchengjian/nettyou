@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Queue;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
@@ -28,6 +27,8 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 
 public class NettyServer {
+	
+	static String ServerVersion = "1.01";
 	
 	static private Logger logger = LoggerFactory.getLogger(NettyServer.class);
 	
@@ -55,7 +56,10 @@ public class NettyServer {
 	
     public void bind(int port) throws Exception {
 
-    	logger.info("----------------启动服务器:" + port + "----------------");
+    	logger.info("-----------------------------------------------------------------------------------------");
+    	logger.info("------------------------启动服务器, 端口:" + port + ", 服务器版本:" + ServerVersion+ "-------------------------------");
+    	logger.info("-----------------------------------------------------------------------------------------");
+    	
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup(10);
         try {
