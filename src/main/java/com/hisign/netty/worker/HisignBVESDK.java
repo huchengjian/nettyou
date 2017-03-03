@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hisign.exception.HisignSDKException;
+import com.hisign.exception.MutilFaceException;
 import com.hisign.exception.NoFaceDetectException;
 import com.hisign.exception.ParseParaException;
 import com.hisign.netty.server.NettyServerHandler;
@@ -43,7 +44,7 @@ public class HisignBVESDK {
 		
 	}
 	
-	public static float compareFromTwoImages(byte[] img1, byte[] img2) throws HisignSDKException, NoFaceDetectException, ParseParaException, IOException{
+	public static float compareFromTwoImages(byte[] img1, byte[] img2) throws HisignSDKException, NoFaceDetectException, ParseParaException, IOException, MutilFaceException{
 		
 		float score = (float) 0.0; 
 //		int init = THIDFaceSDK.init(null, null, null);
@@ -72,19 +73,7 @@ public class HisignBVESDK {
         return bs;
     }
 	
-	/**
-	 * 获取模板数据
-	 * @param img
-	 * @return
-	 * @throws NoFaceDetectException 
-	 * @throws ParseParaException 
-	 * @throws IOException 
-	 */
-	public static byte[] getTemplateByImageByteArray(byte[] img) throws HisignSDKException, NoFaceDetectException, ParseParaException, IOException{
-		
-		int tempsize = THIDFaceSDK.templateSize();
-		byte[] template = new byte[tempsize];
-
+	private static GrayImg getGrayImg(byte[] img) throws IOException, ParseParaException{
 		GrayImg grayimg;
 		grayimg = THIDFaceSDK.readJPG(img);
 		if (grayimg == null) {
@@ -97,19 +86,49 @@ public class HisignBVESDK {
 			logger.info("Error: Can't read grayimg, maybe not an image file");
 			throw new ParseParaException("Can't read grayimg, maybe not an image file");
 		}
+		return grayimg;
+	}
+	
+	public static List<FacePos> getFaceData(GrayImg grayimg) throws NoFaceDetectException{
 		
-		// 获取脸部数据
 		List<FacePos> facePoses = new ArrayList<FacePos>();
-		int detect = THIDFaceSDK.detect(grayimg, null, null, 1, facePoses);
+		int detect = THIDFaceSDK.detect(grayimg, null, null, 100, facePoses);
 		logger.info("detect返回值：" + detect);
 		
 		if(detect < 0){
 			logger.info("Error: Not detect face.");
 			throw new NoFaceDetectException();
 		}
+		return facePoses;
+	}
+	
+	/**
+	 * 获取模板数据
+	 * @param img
+	 * @return
+	 * @throws NoFaceDetectException 
+	 * @throws ParseParaException 
+	 * @throws IOException 
+	 * @throws MutilFaceException 
+	 */
+	public static byte[] getTemplateByImageByteArray(byte[] img) throws HisignSDKException, NoFaceDetectException, ParseParaException, IOException, MutilFaceException{
 		
+		int tempsize = THIDFaceSDK.templateSize();
+		byte[] template = new byte[tempsize];
+
+		GrayImg grayimg = getGrayImg(img);
+		
+		// 获取脸部数据
+		List<FacePos> facePoses = getFaceData(grayimg);
+		facePoses = checkConfidence(facePoses);
+		logger.info("Face count:{}", facePoses.size());
+		
+		if (facePoses.size() > 1) {
+			throw new MutilFaceException(facePoses.size());
+		}
 		
 		Point[] points = new Point[88];
+		
 		int align = 0;
 		if (facePoses.size() > 0) {
 //			align = THIDFaceSDK.align(grayimg, eyepos, points);
@@ -130,7 +149,51 @@ public class HisignBVESDK {
 			logger.info("Error: template size is zero");
 			throw new ParseParaException("template size is zero");
 		}
+		logger.info("2Face count:{}", facePoses.size());
 		return template;
+	}
+	
+	public static List<FacePos> checkConfidence(List<FacePos> facePoses) {
+		if (facePoses.size() <= 1) {
+			return facePoses;
+		}
+		List<FacePos> newFaces = new ArrayList<FacePos>();
+		for (FacePos face : facePoses) {
+			if (face.confidence >= 50) {
+				newFaces.add(face);
+			}
+		}
+		return newFaces;
+	}
+	
+	public static List<byte[]> getTemplates(byte[] img) throws HisignSDKException, NoFaceDetectException, ParseParaException, IOException{
+		
+		int tempsize = THIDFaceSDK.templateSize();
+		
+		GrayImg grayimg = getGrayImg(img);
+		
+		// 获取脸部数据
+		List<FacePos> facePoses = getFaceData(grayimg);
+		
+		List<byte[]> allTemplate = new ArrayList<byte[]>(); 
+		for (int i = 0; i < facePoses.size(); i++) {
+			FacePos facePos = facePoses.get(i);
+			Point[] points = new Point[88];
+			
+			int align = THIDFaceSDK.alignByFace(grayimg, facePos.rect, points);
+			logger.info("align返回值：" + align);
+			
+			byte[] template = new byte[tempsize];
+			int x = THIDFaceSDK.extract(grayimg, points, template);
+			logger.info("extract:" + x);
+			
+			if (template == null || template.length == 0) {
+				logger.info("Error: template size is zero");
+				throw new ParseParaException("template size is zero");
+			}
+			allTemplate.add(template);
+		}
+		return allTemplate;
 	}
 	
 	public static GrayImg readImg(InputStream stream) throws IOException {

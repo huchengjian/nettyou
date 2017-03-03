@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hisign.exception.HisignSDKException;
+import com.hisign.exception.MutilFaceException;
 import com.hisign.exception.NoFaceDetectException;
 import com.hisign.exception.ParseParaException;
 import com.hisign.netty.worker.handler.ComputeSimilarityHandler;
@@ -63,6 +64,10 @@ public class ExtractTemplateRunnable implements Runnable {
 		} catch (IOException e) {
 			task.status = -4;
 			task.template = null;
+			e.printStackTrace();
+		} catch (MutilFaceException e) {
+			logger.error("Message:{}, count:{}", e.getMessage(), e.getFaceCount());
+			task.status = e.getFaceCount();
 			e.printStackTrace();
 		}
 		finally{

@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import com.hisign.constants.SystemConstants;
 import com.hisign.exception.HisignSDKException;
+import com.hisign.exception.MutilFaceException;
 import com.hisign.exception.NoFaceDetectException;
 import com.hisign.exception.ParseParaException;
 
@@ -132,10 +133,14 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 			e.printStackTrace();
 			logger.info("channelRead ParseParaException");
 			result.state= State.ParameterError;
+		} catch (MutilFaceException e) {
+			e.printStackTrace();
+			logger.info("channelRead otherException");
+			result.state = State.MutilFaceError.setValue(e.getFaceCount());
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.info("channelRead otherException");
-			result.state= State.OtherError;
+			result.state = State.OtherError;
 		}finally{
 			sendResult(
 					task.header.messageType, 
@@ -147,7 +152,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 		}
 	}
 
-    public SDKResult doTask(HBVEMessage task) throws HisignSDKException, NoFaceDetectException, ParseParaException, IOException{
+    public SDKResult doTask(HBVEMessage task) throws HisignSDKException, NoFaceDetectException, ParseParaException, IOException, MutilFaceException{
     	
     	SDKResult result = new SDKResult();
     	
