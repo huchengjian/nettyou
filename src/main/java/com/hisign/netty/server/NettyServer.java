@@ -28,7 +28,7 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 
 public class NettyServer {
 	
-	static String ServerVersion = "1.01";
+	static String ServerVersion = "1";
 	
 	static private Logger logger = LoggerFactory.getLogger(NettyServer.class);
 	
@@ -55,10 +55,8 @@ public class NettyServer {
 	}
 	
     public void bind(int port) throws Exception {
-
-    	logger.info("-----------------------------------------------------------------------------------------");
-    	logger.info("------------------------启动服务器, 端口:" + port + ", 服务器版本:" + ServerVersion+ "-------------------------------");
-    	logger.info("-----------------------------------------------------------------------------------------");
+    
+        System.out.println("------------启动HBVE Master服务, 端口:" + port + ", 服务器版本:" + ServerVersion+ "-----------------\n");
     	
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup(10);
@@ -118,8 +116,8 @@ public class NettyServer {
 //    }
 
     public static void main(String[] args) throws Exception {
-
-        logger.info(System.getProperty("user.dir"));
+    
+        System.out.println("User Dir: " + System.getProperty("user.dir"));
         int port = SystemConstants.NettyServerPort;
         if (args != null && args.length > 0) {
             try {
