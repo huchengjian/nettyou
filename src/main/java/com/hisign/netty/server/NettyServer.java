@@ -56,7 +56,7 @@ public class NettyServer {
 	
     public void bind(int port) throws Exception {
     
-        System.out.println("------------启动HBVE Master服务, 端口:" + port + ", 服务器版本:" + ServerVersion+ "-----------------\n");
+        logger.info("------------启动HBVE Master服务, 端口:" + port + ", 服务器版本:" + ServerVersion+ "-----------------\n");
     	
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup(10);
@@ -117,7 +117,7 @@ public class NettyServer {
 
     public static void main(String[] args) throws Exception {
     
-        System.out.println("User Dir: " + System.getProperty("user.dir"));
+        logger.info("User Dir: " + System.getProperty("user.dir"));
         int port = SystemConstants.NettyServerPort;
         if (args != null && args.length > 0) {
             try {

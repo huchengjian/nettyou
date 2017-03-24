@@ -33,7 +33,7 @@ public class Worker {
 	static int LOCALPORT = 8091;
 
 	public static void main(String[] args) throws InterruptedException {
-		
+        
 //		List<String> ips = new ArrayList<String>();
 		String allServers = LOCALHOST;
 		int port = LOCALPORT;
@@ -48,6 +48,8 @@ public class Worker {
 				logger.error("Integer parse error. use integer value.");
 			}
 		}
+        
+        logger.info("------------启动HBVE Worker服务, Worker thread:{}-----------------\n", SystemConstants.MaxWorker);
 
 		exetractTemplatePool = Executors.newFixedThreadPool(SystemConstants.MaxWorker);
 
