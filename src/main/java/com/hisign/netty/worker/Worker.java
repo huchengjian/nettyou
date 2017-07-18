@@ -93,7 +93,6 @@ public class Worker {
 				}).start();
 			}
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

@@ -101,13 +101,11 @@ public class Connection implements Delayed {
 	}
 
 	public int compareTo(Delayed o) {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 
 
 	public long getDelay(TimeUnit unit) {
-		// TODO Auto-generated method stub
 		return endTime - System.currentTimeMillis();
 	}
 }

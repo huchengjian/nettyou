@@ -24,7 +24,6 @@ public class ClientResult {
 		try {
 			statusMessageBytes = statusMessage.getBytes("UTF-8");
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

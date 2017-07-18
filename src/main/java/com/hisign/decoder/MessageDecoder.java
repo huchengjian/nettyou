@@ -48,6 +48,8 @@ public class MessageDecoder extends ByteToMessageDecoder{
                 byte[] workerSDKVersion = new byte[HBVEProtocol.Header_SDKVERSION_LEN];
                 in.readBytes(workerSDKVersion);
                 header.workerSDKVersion = Float.intBitsToFloat(SystemUtil.fourByteArrayToInt(workerSDKVersion));
+                
+                //TODO: 获取worker需要fetch的任务数量
             }
             else if (HBVEMessageType.getMessageType(type).equals(HBVEMessageType.MessageType.Worker_Result)
                     ||

@@ -134,7 +134,6 @@ public class ClientRequest extends Request {
 	}
 
 	public int compareTo(Delayed o) {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 	
@@ -147,7 +146,6 @@ public class ClientRequest extends Request {
 	}
 
 	public long getDelay(TimeUnit unit) {
-		// TODO Auto-generated method stub
 		return 5000;
 	}
 }

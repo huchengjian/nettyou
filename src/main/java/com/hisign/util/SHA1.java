@@ -209,7 +209,6 @@ public class SHA1 {
 		try {
 			mDigest = MessageDigest.getInstance("SHA1");
 		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
         byte[] result = mDigest.digest(input);

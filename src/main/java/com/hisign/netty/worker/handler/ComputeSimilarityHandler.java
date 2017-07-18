@@ -72,7 +72,6 @@ public class ComputeSimilarityHandler extends WorkerHandler{
     			logger.info("wait1");
 				task1.con.await();
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
     		finally{

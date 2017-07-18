@@ -59,7 +59,6 @@ public class NettyWorker {
 		try {
 			nettyClient.connect("127.0.0.1", SystemConstants.NettyServerPort);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

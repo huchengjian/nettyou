@@ -151,7 +151,14 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 		HBVEMessage clientTask = null;
 		
 		float version = worker.header.workerSDKVersion;
-		
+    
+		/**
+         * TODO
+         * 1. 这个while true貌似可以去掉
+         * 2. worker循环的获取多个任务
+         */
+        
+        
 		while(true){
 			//worker not the max version, do nothing
 			if (version < server.maxWorkerVersion.get()) {
@@ -189,6 +196,8 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 			buf.writeByte(worker.header.messageType | clientTask.header.messageType);
 			buf.writeBytes(worker.header.uuid.getBytes());
 			buf.writeBytes(clientTask.data);
+			
+			//Todo 发送多个task任务
 			
 			HBVEBinaryProtocol.writeChannel(worker.ctx, buf.array());
 			

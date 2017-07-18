@@ -76,6 +76,8 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
         request.writeByte(HBVEMessageType.WORKER_FLAG);
         request.writeBytes(sdkVersionBytes);
         
+        //TODO 增加获取任务数量的字段
+        
         ctx.writeAndFlush(request);
     }
     

@@ -29,7 +29,6 @@ public class TimeOutChecker implements Runnable {
 				HBVEMessage conn = timeOutQueue.take();
                 timeOutProcess(conn);
             } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
