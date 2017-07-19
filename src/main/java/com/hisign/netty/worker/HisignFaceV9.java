@@ -18,14 +18,14 @@ public class HisignFaceV9 {
     
     static byte[] img1, img2;
     
-    static {
-        try {
-            img1 = HisignBVESDK.readFile("1.jpg");
-            img2 = HisignBVESDK.readFile("2.jpg");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+//    static {
+//        try {
+//            img1 = HisignBVESDK.readFile("1.jpg");
+//            img2 = HisignBVESDK.readFile("2.jpg");
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
     
     
     public static void main(String[] args) {
@@ -88,11 +88,25 @@ public class HisignFaceV9 {
      * @throws ParseParaException
      * @throws IOException
      */
-    public static float compareFromTwoTemplates(byte[] fea1, byte[] fea2) throws HisignSDKException, NoFaceDetectException, ParseParaException, IOException {
+    public static float compareFromTwoTemplates(byte[] fea1, byte[] fea2) {
         float scores[] = new float[1];
         int verify = THIDFaceSDK.Verify(fea1, fea2, scores);
         log.info("verify status:{}, compare score:{}", verify, scores[0]);
-        return 0;
+        return verify;
+    }
+    
+    public static ImageTemplate[]  getTemplatesTest(byte[][] imgBytes){
+        ImageTemplate result[] = new ImageTemplate[imgBytes.length];
+        int index = 0;
+        for (ImageTemplate image : result){
+            image = new ImageTemplate(ImageTemplate.NO_FACE);
+            result[index++] = image;
+        }
+        return result;
+    }
+    
+    public static float compareFromTwoTemplatesTest(byte[] fea1, byte[] fea2) {
+        return 0.99f;
     }
     
     /**
@@ -103,6 +117,8 @@ public class HisignFaceV9 {
      * @throws IOException
      */
     public static ImageTemplate[] getTemplates(byte[][] imgBytes) {
+        
+        log.info("Process get template list, size:{}", imgBytes.length);
     
         ImageTemplate templates[] = new ImageTemplate[imgBytes.length];
         
@@ -123,31 +139,34 @@ public class HisignFaceV9 {
         int successCount = getSuccessImageCount(faces);
         THIDFaceSDK.Face face_new[] = new THIDFaceSDK.Face[successCount];
         THIDFaceSDK.Image images_new[] = new THIDFaceSDK.Image[successCount];
-        System.out.println("Success image count:"+successCount);
+        log.info("Success image count:" + successCount);
+        int faceIndex = 0;
         for (int i = 0; i < faces.length; i++) {
-            int faceIndex = 0;
             if (faces[i] == null || faces[i].length == 0) {
                 log.debug("face i:{} is null or size 0", i);
                 templates[i] = new ImageTemplate(ImageTemplate.NO_FACE);
             } else {
-                log.info("face i:{} size:{}", i, faces[i].length);
+                log.info("face index:{} size:{}", i, faces[i].length);
                 face_new[faceIndex] = faces[i][0];
                 images_new[faceIndex] = images[i];
                 faceIndex++;
             }
         }
         
+        log.debug("images_new size:{}, face_new size:{}", images_new.length, face_new.length);
+        
         byte[][] features = new byte[images_new.length][];
         int extract = THIDFaceSDK.ExtractFeature(images_new, face_new, features);
         log.debug("extract image:{}", extract);
         
+        int featureIndex = 0;
         for (int i = 0; i < templates.length; i++){
-            int featureIndex = 0;
-            if (templates[i] != null){
-                templates[i] = new ImageTemplate(features[featureIndex], ImageTemplate.SUCCESSS);
-                featureIndex ++;
+            if (templates[i] == null){
+                templates[i] = new ImageTemplate(features[featureIndex++], ImageTemplate.SUCCESSS);
+                log.info("{} get template size:{}", i, templates[i].template.length);
             }
         }
+        log.debug("template size:{}", templates.length);
         return templates;
     }
     
@@ -163,13 +182,14 @@ public class HisignFaceV9 {
     
     public static class ImageTemplate{
         public byte[] template;
-        public int status = -1;
+        public int status = NO_FACE;
         
         public static final int NO_FACE = -1;
         public static final int SUCCESSS = 0;
     
         public ImageTemplate(int status){
             this.status = status;
+            this.template = new byte[0];
         }
     
         public ImageTemplate(byte[] template, int status){

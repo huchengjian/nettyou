@@ -114,6 +114,7 @@ public class ComputeSimilarityHandler extends WorkerHandler{
 
 
     public static class ComputeSimilarityPara {
+	    //type==1 是图像数据, type==2 是特征模板数据
         public int type1;
         public int type2;
         public byte[] face1;

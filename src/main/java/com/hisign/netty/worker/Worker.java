@@ -1,15 +1,16 @@
 package com.hisign.netty.worker;
 
+import java.io.IOException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.hisign.THIDFaceSDK;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hisign.constants.SystemConstants;
 import com.hisign.netty.server.NettyServer;
-import com.hisign.thid.THIDFaceSDK;
 
 public class Worker {
 	
@@ -18,16 +19,20 @@ public class Worker {
 	static private Logger logger = LoggerFactory.getLogger(NettyServer.class);
 	
 	static{
-		int status = THIDFaceSDK.init(null, null, null);
+		int status = THIDFaceSDK.Init(1, null, null, null, null);
 		if (status < 0) {
-			logger.info("\nTHIDFaceSDK init error, error code:" + status);
+			logger.info("THIDFaceSDK init error, error code:{}\n", status);
 			System.exit(status);
 		}
-		logger.info("\nTHIDFaceSDK init success, code:" + status);
-	}
+		logger.info("THIDFaceSDK init success, code:{}\n", status);
+        try {
+            HisignFaceV9.getTemplatesTest();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
 	public static AtomicInteger workerCount = new AtomicInteger(0);
-	
 	
 	static String LOCALHOST = SystemConstants.NettyServerAddr;
 	static int LOCALPORT = 8091;

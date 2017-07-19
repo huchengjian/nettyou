@@ -9,7 +9,7 @@ public class SystemConstants {
 	
 	public static String SDKVersion = "8.3";
 	
-	public static int MaxWorker = 3;
+	public static int MaxWorker = 1;
 	public static int NettyServerPort = 8091;
 	public static String NettyServerAddr = "127.0.0.1";
 	

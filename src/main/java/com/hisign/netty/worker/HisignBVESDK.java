@@ -30,7 +30,7 @@ public class HisignBVESDK {
 	static String fileName1 = "/Users/hugo/test/e2.jpg";
 	static String fileName2 = "/Users/hugo/Documents/8079";
 	
-	static private Logger logger = LoggerFactory.getLogger(NettyServerHandler.class);
+	static private Logger logger = LoggerFactory.getLogger(HisignBVESDK.class);
 	
 	public static void main(String[] args) throws IOException, HisignSDKException, NoFaceDetectException, ParseParaException {
 //		int init = THIDFaceSDK.init(null, null, null);
