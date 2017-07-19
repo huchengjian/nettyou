@@ -90,9 +90,14 @@ public class HisignFaceV9 {
      */
     public static float compareFromTwoTemplates(byte[] fea1, byte[] fea2) {
         float scores[] = new float[1];
-        int verify = THIDFaceSDK.Verify(fea1, fea2, scores);
-        log.info("verify status:{}, compare score:{}", verify, scores[0]);
-        return verify;
+        try{
+            int verify = THIDFaceSDK.Verify(fea1, fea2, scores);
+            log.info("verify status:{}, compare score:{}", verify, scores[0]);
+        }catch (Exception e){
+            e.printStackTrace();
+        }finally {
+            return scores[0];
+        }
     }
     
     public static ImageTemplate[]  getTemplatesTest(byte[][] imgBytes){
@@ -122,7 +127,7 @@ public class HisignFaceV9 {
     
         ImageTemplate templates[] = new ImageTemplate[imgBytes.length];
         
-        THIDFaceSDK.Image images[] = new THIDFaceSDK.Image[2];
+        THIDFaceSDK.Image images[] = new THIDFaceSDK.Image[imgBytes.length];
         for (int i = 0; i < imgBytes.length; i++) {
             THIDFaceSDK.Image tempImage = new THIDFaceSDK.Image();
             int decode = THIDFaceSDK.DecodeJPG(tempImage, imgBytes[i]);

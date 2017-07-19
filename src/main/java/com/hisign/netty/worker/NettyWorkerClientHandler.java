@@ -37,8 +37,6 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 	
 	boolean isFirstReq = true;
 	
-	public static int maxTaskCount = 10;
-	
 	private BlockingQueue<HBVEMessage> taskQueue;
 	
 	public NettyWorkerClientHandler(String name){
@@ -62,8 +60,8 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
         @Override
         public void run() {
             while (true){
-                List<HBVEMessage> taskList = new ArrayList<HBVEMessage>();
-                for (int i = 0; i < maxTaskCount; i++){
+                List<HBVEMessage> taskList = new ArrayList<>();
+                for (int i = 0; i < SystemConstants.MAX_SDK_BATCH; i++){
                     try {
                         if (taskList.size() > 0 && taskQueue.size()==0){
                             //没有可取的task

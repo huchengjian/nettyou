@@ -25,11 +25,6 @@ public class Worker {
 			System.exit(status);
 		}
 		logger.info("THIDFaceSDK init success, code:{}\n", status);
-        try {
-            HisignFaceV9.getTemplatesTest();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
 	public static AtomicInteger workerCount = new AtomicInteger(0);
@@ -43,18 +38,19 @@ public class Worker {
 		String allServers = LOCALHOST;
 		int port = LOCALPORT;
 
-		if (args != null && args.length >= 2) {
+		if (args != null && args.length >= 3) {
 			try {
 				allServers = args[0].trim();
 				logger.info("allServers:"+allServers);
 				port = Integer.parseInt(args[1]);
 				SystemConstants.MaxWorker = Integer.parseInt(args[2]);
+				SystemConstants.MAX_SDK_BATCH = Integer.parseInt(args[3]);
 			} catch (NumberFormatException e) {
 				logger.error("Integer parse error. use integer value.");
 			}
 		}
         
-        logger.info("------------启动HBVE Worker服务, Worker thread:{}-----------------\n", SystemConstants.MaxWorker);
+        logger.info("------------启动HBVE Worker服务, MAX_SDK_BATCH:{}-----------------\n", SystemConstants.MaxWorker);
 
 		exetractTemplatePool = Executors.newFixedThreadPool(SystemConstants.MaxWorker);
 
