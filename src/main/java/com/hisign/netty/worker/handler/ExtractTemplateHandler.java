@@ -2,6 +2,7 @@ package com.hisign.netty.worker.handler;
 
 import java.io.IOException;
 
+import com.hisign.THIDFaceSDK;
 import com.hisign.exception.HisignSDKException;
 import com.hisign.exception.NoFaceDetectException;
 import com.hisign.exception.ParseParaException;
@@ -30,12 +31,21 @@ public class ExtractTemplateHandler extends WorkerHandler {
 	public static class ExtractTemplatePara {
         private byte[] imgData;
         
-    	public void setData(byte[] data) {
-    		this.imgData = data;
+        private THIDFaceSDK.Image decodeImg;
+        
+    	public void setDecodeImg(THIDFaceSDK.Image decodeImg) {
+    		this.decodeImg = decodeImg;
     	}
-    	public byte[] getData() {
-    		return imgData;
+    	public THIDFaceSDK.Image getDecodeImg() {
+    		return decodeImg;
     	}
+        
+        public void setData(byte[] data) {
+            this.imgData = data;
+        }
+        public byte[] getData() {
+            return imgData;
+        }
 
 		public static ExtractTemplatePara paraseData(byte[] para)
 				throws ParseParaException {

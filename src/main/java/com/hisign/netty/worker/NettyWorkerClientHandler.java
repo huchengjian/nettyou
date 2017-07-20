@@ -8,6 +8,7 @@ import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import com.hisign.THIDFaceSDK;
 import com.hisign.hbve.protocol.HBVEMessage;
 import com.hisign.hbve.protocol.HBVEMessageType;
 import com.hisign.netty.worker.SDKResult.State;
@@ -38,12 +39,15 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 	boolean isFirstReq = true;
 	
 	private BlockingQueue<HBVEMessage> taskQueue;
+	private BlockingQueue<HBVEMessage> decodeTaskQueue;
 	
 	public NettyWorkerClientHandler(String name){
 		tName = name;
         taskQueue = new LinkedBlockingQueue();
+        decodeTaskQueue = new LinkedBlockingQueue();
         
         new Thread(new ProcessThread()).start();
+        new Thread(new DecodeThread()).start();
 	}
 	
 	byte[] currUUID = {};
@@ -63,11 +67,11 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
                 List<HBVEMessage> taskList = new ArrayList<>();
                 for (int i = 0; i < SystemConstants.MAX_SDK_BATCH; i++){
                     try {
-                        if (taskList.size() > 0 && taskQueue.size()==0){
+                        if (taskList.size() > 0 && decodeTaskQueue.size()==0){
                             //没有可取的task
                             break;
                         }
-                        HBVEMessage task = taskQueue.take();
+                        HBVEMessage task = decodeTaskQueue.take();
                         taskList.add(task);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
@@ -81,51 +85,46 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
     
             logger.info("Process task list, list size:{}", taskList.size());
             
-            List<byte[]> imageBytesList = new ArrayList<>();
+            List<THIDFaceSDK.Image> thidImageList = new ArrayList<>();
             
-            //轮询当前的taskList, 找出需要提取特征的
+            //轮询当前的taskList, 找出需要提取特征的image
             for (int i = 0; i < taskList.size(); i++){
-                
+    
                 HBVEMessage task = taskList.get(i);
-                try {
-                    if (HBVEMessageType.getClientMessageType(task.header.messageType)
-                            .equals(HBVEMessageType.ClientMessageType.Similarity)) {
-                        ComputeSimilarityHandler.ComputeSimilarityPara computeSimilarityPara =
-                                ComputeSimilarityHandler.ComputeSimilarityPara.paraseData(task.data);
-                        if (computeSimilarityPara.type1 == 1) {
-                            imageBytesList.add(computeSimilarityPara.face1);
-                        }
-                        if (computeSimilarityPara.type1 == 1) {
-                            imageBytesList.add(computeSimilarityPara.face2);
-                        }
+    
+                if (HBVEMessageType.getClientMessageType(task.header.messageType)
+                        .equals(HBVEMessageType.ClientMessageType.Similarity)) {
+                    if (task.computeSimilarityPara.type1 == 1) {
+                        thidImageList.add(task.computeSimilarityPara.decodeFace1);
                     }
-                    else if (HBVEMessageType.getClientMessageType(task.header.messageType)
-                            .equals(HBVEMessageType.ClientMessageType.Extract_Template)) {
-                        ExtractTemplateHandler.ExtractTemplatePara extractTemplatePara =
-                                ExtractTemplateHandler.ExtractTemplatePara.paraseData(task.data);
-                        imageBytesList.add(extractTemplatePara.getData());
+                    if (task.computeSimilarityPara.type1 == 1) {
+                        thidImageList.add(task.computeSimilarityPara.decodeFace2);
                     }
-                }catch (ParseParaException e) {
-                    e.printStackTrace();
+                } else if (HBVEMessageType.getClientMessageType(task.header.messageType)
+                        .equals(HBVEMessageType.ClientMessageType.Extract_Template)) {
+                    thidImageList.add(task.extractTemplatePara.getDecodeImg());
                 }
             }
             
-            byte imageBytesArray[][] = castImageArray(imageBytesList);
-            HisignFaceV9.ImageTemplate templates[] = HisignFaceV9.getTemplates(imageBytesArray);
+            THIDFaceSDK.Image images[] = castImageArray(thidImageList);
+            HisignFaceV9.ImageTemplate templates[] = HisignFaceV9.getTemplatesTest(images);
     
             doTasks(taskList, templates);
         }
         
-        public byte[][] castImageArray(List<byte[]> imageBytesList){
-            byte[][] templates = new byte[imageBytesList.size()][];
+        public THIDFaceSDK.Image[] castImageArray(List<THIDFaceSDK.Image> imageBytesList){
+            THIDFaceSDK.Image imagesArray[] = new THIDFaceSDK.Image[imageBytesList.size()];
             int index = 0;
-            for (byte[] image : imageBytesList){
-                templates[index++] = image;
+            for (THIDFaceSDK.Image image : imageBytesList){
+                imagesArray[index++] = image;
             }
-            return templates;
+            return imagesArray;
         }
         
+        
         private void doTasks(List<HBVEMessage> taskList, HisignFaceV9.ImageTemplate templates[]){
+            
+            //根据提取的特征, 将任务进行逐个的比对
             int templateIndex = 0;
             for (int i = 0; i < taskList.size(); i++){
                 HBVEMessage task = taskList.get(i);
@@ -133,17 +132,15 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
                 try {
                     if (HBVEMessageType.getClientMessageType(task.header.messageType)
                             .equals(HBVEMessageType.ClientMessageType.Similarity)) {
-                        ComputeSimilarityHandler.ComputeSimilarityPara computeSimilarityPara =
-                                ComputeSimilarityHandler.ComputeSimilarityPara.paraseData(task.data);
-                        byte fea1[], fea2[] = null;
-                        if (computeSimilarityPara.type1 == 2) {
-                            fea1 = computeSimilarityPara.getFace1();
+                        byte fea1[], fea2[];
+                        if (task.computeSimilarityPara.type1 == 2) {
+                            fea1 = task.computeSimilarityPara.getFace1();
                         }
                         else {
                             fea1 = templates[templateIndex++].template;
                         }
-                        fea2 = computeSimilarityPara.type2 == 2 ? computeSimilarityPara.getFace2():templates[templateIndex++].template;
-                        float score = HisignFaceV9.compareFromTwoTemplates(fea1, fea2);
+                        fea2 = task.computeSimilarityPara.type2 == 2 ? task.computeSimilarityPara.getFace2():templates[templateIndex++].template;
+                        float score = HisignFaceV9.compareFromTwoTemplatesTest(fea1, fea2);
     
                         result.data = SystemUtil.int2byte(Float.floatToIntBits(score));
                         result.state = State.Success;
@@ -155,9 +152,6 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
                         result.data = template;
                         result.state = State.Success;
                     }
-                }catch (ParseParaException e) {
-                    e.printStackTrace();
-                    result.state = State.ParameterError;
                 }finally {
                     byte[] uuid = task.header.uuid.getBytes();
                     sendResult(
@@ -310,5 +304,63 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 
     private byte[] getHeader() {
         return (SystemConstants.MAGIC + SystemConstants.CURRENT_VERSION).getBytes();
+    }
+    
+    private class DecodeThread implements Runnable{
+    
+        @Override
+        public void run() {
+    
+            logger.info("Running DecodeThread...");
+            
+            while(true){
+                try {
+                    HBVEMessage task = taskQueue.take();
+                    if (HBVEMessageType.getClientMessageType(task.header.messageType)
+                            .equals(HBVEMessageType.ClientMessageType.Similarity)) {
+                        
+                        ComputeSimilarityHandler.ComputeSimilarityPara computeSimilarityPara =
+                                ComputeSimilarityHandler.ComputeSimilarityPara.paraseData(task.data);
+    
+                        THIDFaceSDK.Image decodeImg1 = null, decodeImg2 = null;
+                        if (computeSimilarityPara.type1 == 1){
+                            decodeImg1 = HisignFaceV9.deocdeImageTest(computeSimilarityPara.getFace1());
+                        }
+                        if (computeSimilarityPara.type2 == 1){
+                            decodeImg2 = HisignFaceV9.deocdeImageTest(computeSimilarityPara.getFace2());
+                        }
+                        if(decodeImg1 == null || decodeImg2 == null){
+                            //TODO send
+                        }
+    
+                        task.computeSimilarityPara = computeSimilarityPara;
+                        task.computeSimilarityPara.decodeFace1 = decodeImg1;
+                        task.computeSimilarityPara.decodeFace2 = decodeImg2;
+                        
+                        
+                    }
+                    else if (HBVEMessageType.getClientMessageType(task.header.messageType)
+                            .equals(HBVEMessageType.ClientMessageType.Extract_Template)) {
+    
+                        ExtractTemplateHandler.ExtractTemplatePara extractTemplatePara =
+                                ExtractTemplateHandler.ExtractTemplatePara.paraseData(task.data);
+                        THIDFaceSDK.Image decode = HisignFaceV9.deocdeImageTest(extractTemplatePara.getData());
+    
+                        if(decode == null){
+                            //TODO send
+                        }
+                        
+                        task.extractTemplatePara = extractTemplatePara;
+                        task.extractTemplatePara.setDecodeImg(decode);
+                    }
+                    
+                    decodeTaskQueue.offer(task);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ParseParaException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 }

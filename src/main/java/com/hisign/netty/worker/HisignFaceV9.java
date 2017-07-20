@@ -33,12 +33,6 @@ public class HisignFaceV9 {
     }
     
     public static void getTemplatesTest() {
-        
-        byte imgs[][] = new byte[2][];
-        imgs[0] = img1;
-        imgs[1] = img2;
-        
-        getTemplates(imgs);
     }
     
     public static void test() throws IOException {
@@ -100,8 +94,8 @@ public class HisignFaceV9 {
         }
     }
     
-    public static ImageTemplate[]  getTemplatesTest(byte[][] imgBytes){
-        ImageTemplate result[] = new ImageTemplate[imgBytes.length];
+    public static ImageTemplate[]  getTemplatesTest(THIDFaceSDK.Image images[]){
+        ImageTemplate result[] = new ImageTemplate[images.length];
         int index = 0;
         for (ImageTemplate image : result){
             image = new ImageTemplate(ImageTemplate.NO_FACE);
@@ -115,27 +109,53 @@ public class HisignFaceV9 {
     }
     
     /**
+     *
+     * @param img
+     * @return
+     */
+    public static THIDFaceSDK.Image deocdeImage(byte[] img){
+        THIDFaceSDK.Image tempImage = new THIDFaceSDK.Image();
+        int decode = THIDFaceSDK.DecodeJPG(tempImage, img);
+        log.debug("decode image:{}", decode);
+        if (decode != 0){
+            tempImage = null;
+        }
+        return tempImage;
+    }
+    
+    /**
+     *
+     * @param img
+     * @return
+     */
+    public static THIDFaceSDK.Image deocdeImageTest(byte[] img){
+        THIDFaceSDK.Image tempImage = new THIDFaceSDK.Image();
+        return tempImage;
+    }
+    
+    
+    /**
      * 批量获取模板数据
      * @return
      * @throws NoFaceDetectException
      * @throws ParseParaException
      * @throws IOException
      */
-    public static ImageTemplate[] getTemplates(byte[][] imgBytes) {
+    public static ImageTemplate[] getTemplates(THIDFaceSDK.Image images[]) {
         
-        log.info("Process get template list, size:{}", imgBytes.length);
+        log.info("Process get template list, size:{}", images.length);
     
-        ImageTemplate templates[] = new ImageTemplate[imgBytes.length];
+//        THIDFaceSDK.Image images[] = new THIDFaceSDK.Image[imgBytes.length];
+//        for (int i = 0; i < imgBytes.length; i++) {
+//            THIDFaceSDK.Image tempImage = new THIDFaceSDK.Image();
+//            int decode = THIDFaceSDK.DecodeJPG(tempImage, imgBytes[i]);
+//            log.debug("decode image:{}", decode);
+//            images[i] = tempImage;
+//        }
         
-        THIDFaceSDK.Image images[] = new THIDFaceSDK.Image[imgBytes.length];
-        for (int i = 0; i < imgBytes.length; i++) {
-            THIDFaceSDK.Image tempImage = new THIDFaceSDK.Image();
-            int decode = THIDFaceSDK.DecodeJPG(tempImage, imgBytes[i]);
-            log.debug("decode image:{}", decode);
-            images[i] = tempImage;
-        }
+        ImageTemplate templates[] = new ImageTemplate[images.length];
         
-        THIDFaceSDK.Face faces[][] = new THIDFaceSDK.Face[images.length][10];
+        THIDFaceSDK.Face faces[][] = new THIDFaceSDK.Face[images.length][1];
         int detect = THIDFaceSDK.DetectFace(images, faces, 0, 0, null);
         log.debug("detect image:{}", detect);
         

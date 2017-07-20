@@ -3,6 +3,8 @@ package com.hisign.hbve.protocol;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
+import com.hisign.netty.worker.handler.ComputeSimilarityHandler;
+import com.hisign.netty.worker.handler.ExtractTemplateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,8 +16,11 @@ public class HBVEMessage implements Delayed{
 
     public HBVEHeader header;
     public byte[] data;
-
+    
     public ChannelHandlerContext ctx = null;
+    
+    public ComputeSimilarityHandler.ComputeSimilarityPara computeSimilarityPara;
+    public ExtractTemplateHandler.ExtractTemplatePara extractTemplatePara;
 
     public long start;
     public long timeout;//超时时间 单位纳秒

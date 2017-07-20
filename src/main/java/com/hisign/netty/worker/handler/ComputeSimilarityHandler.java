@@ -5,6 +5,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.hisign.THIDFaceSDK;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -119,6 +120,9 @@ public class ComputeSimilarityHandler extends WorkerHandler{
         public int type2;
         public byte[] face1;
         public byte[] face2;
+        
+        public THIDFaceSDK.Image decodeFace1;
+        public THIDFaceSDK.Image decodeFace2;
         
         public int getType1() {
     		return type1;

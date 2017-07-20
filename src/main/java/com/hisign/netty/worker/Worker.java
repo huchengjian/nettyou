@@ -18,14 +18,14 @@ public class Worker {
 	
 	static private Logger logger = LoggerFactory.getLogger(NettyServer.class);
 	
-	static{
-		int status = THIDFaceSDK.Init(1, null, null, null, null);
-		if (status < 0) {
-			logger.info("THIDFaceSDK init error, error code:{}\n", status);
-			System.exit(status);
-		}
-		logger.info("THIDFaceSDK init success, code:{}\n", status);
-    }
+//	static{
+//		int status = THIDFaceSDK.Init(1, null, null, null, null);
+//		if (status < 0) {
+//			logger.info("THIDFaceSDK init error, error code:{}\n", status);
+//			System.exit(status);
+//		}
+//		logger.info("THIDFaceSDK init success, code:{}\n", status);
+//    }
 
 	public static AtomicInteger workerCount = new AtomicInteger(0);
 	
