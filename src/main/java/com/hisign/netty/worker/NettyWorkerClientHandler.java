@@ -47,7 +47,9 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
         decodeTaskQueue = new LinkedBlockingQueue();
         
         new Thread(new ProcessThread()).start();
-        new Thread(new DecodeThread()).start();
+        for (int i = 0 ;i<SystemConstants.DECODE_THREAD_COUNT; i++) {
+            new Thread(new DecodeThread()).start();
+        }
 	}
 	
 	byte[] currUUID = {};
@@ -63,6 +65,9 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
     
         @Override
         public void run() {
+            
+            logger.info("Running ProcessThread...");
+            
             while (true){
                 List<HBVEMessage> taskList = new ArrayList<>();
                 for (int i = 0; i < SystemConstants.MAX_SDK_BATCH; i++){
@@ -83,7 +88,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
         
         private void processTaskList(List<HBVEMessage> taskList){
     
-            logger.info("Process task list, list size:{}", taskList.size());
+            logger.info("\nProcess task list, list size:{}\n", taskList.size());
             
             List<THIDFaceSDK.Image> thidImageList = new ArrayList<>();
             
@@ -107,7 +112,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
             }
             
             THIDFaceSDK.Image images[] = castImageArray(thidImageList);
-            HisignFaceV9.ImageTemplate templates[] = HisignFaceV9.getTemplatesTest(images);
+            HisignFaceV9.ImageTemplate templates[] = HisignFaceV9.getTemplates(images);
     
             doTasks(taskList, templates);
         }
@@ -140,7 +145,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
                             fea1 = templates[templateIndex++].template;
                         }
                         fea2 = task.computeSimilarityPara.type2 == 2 ? task.computeSimilarityPara.getFace2():templates[templateIndex++].template;
-                        float score = HisignFaceV9.compareFromTwoTemplatesTest(fea1, fea2);
+                        float score = HisignFaceV9.compareFromTwoTemplates(fea1, fea2);
     
                         result.data = SystemUtil.int2byte(Float.floatToIntBits(score));
                         result.state = State.Success;
@@ -324,10 +329,10 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
     
                         THIDFaceSDK.Image decodeImg1 = null, decodeImg2 = null;
                         if (computeSimilarityPara.type1 == 1){
-                            decodeImg1 = HisignFaceV9.deocdeImageTest(computeSimilarityPara.getFace1());
+                            decodeImg1 = HisignFaceV9.deocdeImage(computeSimilarityPara.getFace1());
                         }
                         if (computeSimilarityPara.type2 == 1){
-                            decodeImg2 = HisignFaceV9.deocdeImageTest(computeSimilarityPara.getFace2());
+                            decodeImg2 = HisignFaceV9.deocdeImage(computeSimilarityPara.getFace2());
                         }
                         if(decodeImg1 == null || decodeImg2 == null){
                             //TODO send
@@ -344,7 +349,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
     
                         ExtractTemplateHandler.ExtractTemplatePara extractTemplatePara =
                                 ExtractTemplateHandler.ExtractTemplatePara.paraseData(task.data);
-                        THIDFaceSDK.Image decode = HisignFaceV9.deocdeImageTest(extractTemplatePara.getData());
+                        THIDFaceSDK.Image decode = HisignFaceV9.deocdeImage(extractTemplatePara.getData());
     
                         if(decode == null){
                             //TODO send

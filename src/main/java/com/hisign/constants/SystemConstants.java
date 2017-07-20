@@ -12,6 +12,7 @@ public class SystemConstants {
 	public static int MAX_SDK_BATCH = 16;
 	
 	public static int MaxWorker = 1;
+	public static int DECODE_THREAD_COUNT = 4;
 	public static int NettyServerPort = 8091;
 	public static String NettyServerAddr = "127.0.0.1";
 	
