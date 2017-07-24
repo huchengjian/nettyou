@@ -158,6 +158,27 @@ public class HisignFaceV9 {
         THIDFaceSDK.Face faces[][] = new THIDFaceSDK.Face[images.length][1];
         int detect = THIDFaceSDK.DetectFace(images, faces, 0, 0, null);
         log.debug("detect image:{}", detect);
+
+
+//        for (int i = 0; i< images.length; i++){
+//            THIDFaceSDK.Image tempImage[] = new THIDFaceSDK.Image[1];
+//            tempImage[0] = images[i];
+//            THIDFaceSDK.Face tempFace[][] = new THIDFaceSDK.Face[1][1];
+//
+//            int min_face = tempImage[0].height < tempImage[0].width ? tempImage[0].height/4 : tempImage[0].width/4;
+//            log.debug("Min face:{}", min_face);
+//            int detect = THIDFaceSDK.DetectFace(tempImage, tempFace, min_face, 0, null);
+//            log.info("Detect image status:{}, batchSize:{}", detect, tempImage.length);
+//
+//            if (tempFace[0] == null || tempFace[0].length == 0){
+//                detect = THIDFaceSDK.DetectFace(tempImage, tempFace, 0, 0, null);
+//                log.debug("Re-Detect image status:{}, batchSize:{}, min_face:0", detect, tempImage.length);
+//            }
+//
+//            images[i] = tempImage[0];
+//            faces[i] = tempFace[0];
+//        }
+        
         
         //获取faces每张图片的第一个人脸, 没有detect到人脸的不要获取模板
         //face_new images_new是剔除没有人脸的数组
@@ -182,14 +203,14 @@ public class HisignFaceV9 {
         
         byte[][] features = new byte[images_new.length][];
         int extract = THIDFaceSDK.ExtractFeature(images_new, face_new, features);
-        log.debug("extract image:{}", extract);
+        log.debug("extract image status:{}", extract);
         
         int featureIndex = 0;
         for (int i = 0; i < templates.length; i++){
             if (templates[i] == null){
                 templates[i] = new ImageTemplate(features[featureIndex++], ImageTemplate.SUCCESSS);
-                log.info("{} get template size:{}", i, templates[i].template.length);
             }
+            log.info("Image:{} template is null", i);
         }
         log.debug("template size:{}", templates.length);
         return templates;
