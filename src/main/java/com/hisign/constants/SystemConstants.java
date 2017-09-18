@@ -23,7 +23,7 @@ public class SystemConstants {
 	public static String MAGIC = "HBVE";
 	public static byte[] MAGIC_BYTES = MAGIC.getBytes();
 	public static int CURRENT_VERSION = 1;
-	public static byte[] CURRENT_VERSION_BYTES = SystemUtil.int2byte(CURRENT_VERSION);
+	public static byte[] CURRENT_VERSION_BYTES = SystemUtil.int2Bytes(CURRENT_VERSION);
 	
 	public static byte[] header;//todo-合并一下
 	public static int Header_Len = MAGIC_BYTES.length + CURRENT_VERSION_BYTES.length;

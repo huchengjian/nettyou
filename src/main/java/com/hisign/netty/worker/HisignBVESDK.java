@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 import com.hisign.exception.HisignSDKException;
 import com.hisign.exception.NoFaceDetectException;
 import com.hisign.exception.ParseParaException;
-import com.hisign.netty.server.NettyServerHandler;
 import com.hisign.thid.FacePos;
 import com.hisign.thid.GrayImg;
 import com.hisign.thid.Point;

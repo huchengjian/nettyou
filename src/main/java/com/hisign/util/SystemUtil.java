@@ -18,7 +18,7 @@ public class SystemUtil {
 //		return UUID.randomUUID();
 //	}
 	
-	public static byte[] int2byte(int res) {
+	public static byte[] int2Bytes(int res) {
 		byte[] b = new byte[4];
 		for (int i = 0; i < 4; i++) {
 			b[i] = (byte) (res >>> (24 - i * 8));
@@ -149,9 +149,22 @@ public class SystemUtil {
 	        b[i] = (byte) ((parse(c0) << 4) | parse(c1));  
 	    }  
 	    return b;  
-	}  
-	
-	public static void main(String[] args) {
+	}
+    
+    public static int byteArrayToInt(byte[] b) {
+        return   b[3] & 0xFF |
+                (b[2] & 0xFF) << 8 |
+                (b[1] & 0xFF) << 16 |
+                (b[0] & 0xFF) << 24;
+    }
+    
+    
+    //byte 与 int 的相互转换
+    public static byte intToByte(int x) {
+        return (byte) x;
+    }
+    
+    public static void main(String[] args) {
 		Integer s;
 		int x = Float.floatToIntBits((float) 9.375);
 	}

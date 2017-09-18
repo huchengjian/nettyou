@@ -4,15 +4,19 @@ import com.hisign.THIDFaceSDK;
 import com.hisign.exception.HisignSDKException;
 import com.hisign.exception.NoFaceDetectException;
 import com.hisign.exception.ParseParaException;
+import com.hisign.hbve.protocol.HBVEMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Created by hugo on 7/18/17.
  */
 public class HisignFaceV9 {
+    
+    public static final int MAX_DETECT_FACE = 20;
     
     static private Logger log = LoggerFactory.getLogger(HisignFaceV9.class);
     
@@ -20,6 +24,20 @@ public class HisignFaceV9 {
     
     public static void main(String[] args) {
         
+    }
+    
+    public static ImageTemplate[]  getTemplatesTest(THIDFaceSDK.Image images[]){
+        ImageTemplate result[] = new ImageTemplate[images.length];
+        int index = 0;
+        for (ImageTemplate image : result){
+            image = new ImageTemplate(ImageTemplate.NO_FACE);
+            result[index++] = image;
+        }
+        return result;
+    }
+    
+    public static float compareFromTwoTemplatesTest(byte[] fea1, byte[] fea2) {
+        return 0.99f;
     }
     
     public static void test() throws IOException {
@@ -81,20 +99,6 @@ public class HisignFaceV9 {
         }
     }
     
-    public static ImageTemplate[]  getTemplatesTest(THIDFaceSDK.Image images[]){
-        ImageTemplate result[] = new ImageTemplate[images.length];
-        int index = 0;
-        for (ImageTemplate image : result){
-            image = new ImageTemplate(ImageTemplate.NO_FACE);
-            result[index++] = image;
-        }
-        return result;
-    }
-    
-    public static float compareFromTwoTemplatesTest(byte[] fea1, byte[] fea2) {
-        return 0.99f;
-    }
-    
     /**
      *
      * @param img
@@ -120,10 +124,18 @@ public class HisignFaceV9 {
         return tempImage;
     }
     
-    public static THIDFaceSDK.Face[][] detectBatch(THIDFaceSDK.Image images[]){
+    public static THIDFaceSDK.Face[][] detectBatch(List<Integer> faceCountList, List<THIDFaceSDK.Rect> rects, THIDFaceSDK.Image images[]){
     
-        THIDFaceSDK.Face faces[][] = new THIDFaceSDK.Face[images.length][1];
-        int detect = THIDFaceSDK.DetectFace(images, faces, 0, 0, null);
+        THIDFaceSDK.Face faces[][] = new THIDFaceSDK.Face[images.length][];
+        
+        for (int i = 0;i<faceCountList.size();i++){
+            faces[i] = new THIDFaceSDK.Face[faceCountList.get(i)];
+        }
+    
+        THIDFaceSDK.Rect rectArray[] = new THIDFaceSDK.Rect[0];
+        rects.toArray(rectArray);
+        
+        int detect = THIDFaceSDK.DetectFace(images, faces, 0, 0, rectArray);
         log.debug("Detect image:{}", detect);
         
         return faces;

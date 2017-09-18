@@ -34,7 +34,7 @@ public class ComputeSimilarityHandler extends WorkerHandler{
 			float score = compute(computeSimilarityPara.getType1(), computeSimilarityPara.getType2(),
 					computeSimilarityPara.getFace1(), computeSimilarityPara.getFace2());
 			
-			result.data = SystemUtil.int2byte(Float.floatToIntBits(score));
+			result.data = SystemUtil.int2Bytes(Float.floatToIntBits(score));
 			result.state = State.Success;
 		return result;
 	}

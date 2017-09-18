@@ -4,6 +4,7 @@ import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
 import com.hisign.netty.worker.handler.ComputeSimilarityHandler;
+import com.hisign.netty.worker.handler.DetectHandler;
 import com.hisign.netty.worker.handler.ExtractTemplateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +22,7 @@ public class HBVEMessage implements Delayed{
     
     public ComputeSimilarityHandler.ComputeSimilarityPara computeSimilarityPara;
     public ExtractTemplateHandler.ExtractTemplatePara extractTemplatePara;
+    public DetectHandler.DetectPara detectPara;
 
     public long start;
     public long timeout;//超时时间 单位纳秒

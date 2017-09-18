@@ -4,7 +4,7 @@ public class HBVEHeader {
 	
 	public byte messageType;
 	public int connId;
-	public int faceCount;
+	public int faceCount; //需要检测的人脸数量的参数, 若为零则标识选取最大的人脸
 	
 	public String uuid;
 	
