@@ -18,21 +18,8 @@ public class HisignFaceV9 {
     
     static byte[] img1, img2;
     
-//    static {
-//        try {
-//            img1 = HisignBVESDK.readFile("1.jpg");
-//            img2 = HisignBVESDK.readFile("2.jpg");
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
-    
-    
     public static void main(String[] args) {
         
-    }
-    
-    public static void getTemplatesTest() {
     }
     
     public static void test() throws IOException {
@@ -116,7 +103,7 @@ public class HisignFaceV9 {
     public static THIDFaceSDK.Image deocdeImage(byte[] img){
         THIDFaceSDK.Image tempImage = new THIDFaceSDK.Image();
         int decode = THIDFaceSDK.DecodeJPG(tempImage, img);
-        log.debug("decode image:{}", decode);
+        log.debug("Decode image:{}", decode);
         if (decode != 0){
             tempImage = null;
         }
@@ -131,6 +118,55 @@ public class HisignFaceV9 {
     public static THIDFaceSDK.Image deocdeImageTest(byte[] img){
         THIDFaceSDK.Image tempImage = new THIDFaceSDK.Image();
         return tempImage;
+    }
+    
+    public static THIDFaceSDK.Face[][] detectBatch(THIDFaceSDK.Image images[]){
+    
+        THIDFaceSDK.Face faces[][] = new THIDFaceSDK.Face[images.length][1];
+        int detect = THIDFaceSDK.DetectFace(images, faces, 0, 0, null);
+        log.debug("Detect image:{}", detect);
+        
+        return faces;
+    }
+    
+    public static ImageTemplate[] extractBatch(THIDFaceSDK.Image images[], THIDFaceSDK.Face faces[][]){
+    
+        ImageTemplate templates[] = new ImageTemplate[images.length];
+    
+        //获取faces每张图片的第一个人脸, 没有detect到人脸的不要获取模板
+        //face_new images_new是剔除没有人脸的数组
+        int successCount = getSuccessImageCount(faces);
+        THIDFaceSDK.Face face_new[] = new THIDFaceSDK.Face[successCount];
+        THIDFaceSDK.Image images_new[] = new THIDFaceSDK.Image[successCount];
+        log.info("Success image count:" + successCount);
+        int faceIndex = 0;
+        for (int i = 0; i < faces.length; i++) {
+            if (faces[i] == null || faces[i].length == 0) {
+                log.debug("face i:{} is null or size 0", i);
+                templates[i] = new ImageTemplate(ImageTemplate.NO_FACE);
+            } else {
+                log.info("face index:{} size:{}", i, faces[i].length);
+                face_new[faceIndex] = faces[i][0];
+                images_new[faceIndex] = images[i];
+                faceIndex++;
+            }
+        }
+    
+        log.debug("images_new size:{}, face_new size:{}", images_new.length, face_new.length);
+    
+        byte[][] features = new byte[images_new.length][];
+        int extract = THIDFaceSDK.ExtractFeature(images_new, face_new, features);
+        log.debug("extract image status:{}", extract);
+    
+        int featureIndex = 0;
+        for (int i = 0; i < templates.length; i++){
+            if (templates[i] == null){
+                templates[i] = new ImageTemplate(features[featureIndex++], ImageTemplate.SUCCESSS);
+            }
+            log.info("Image:{} template is null", i);
+        }
+        log.debug("template size:{}", templates.length);
+        return templates;
     }
     
     

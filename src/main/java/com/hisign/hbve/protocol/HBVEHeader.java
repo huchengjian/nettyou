@@ -4,6 +4,7 @@ public class HBVEHeader {
 	
 	public byte messageType;
 	public int connId;
+	public int faceCount;
 	
 	public String uuid;
 	

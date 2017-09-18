@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -39,14 +38,17 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 	boolean isFirstReq = true;
 	
 	private BlockingQueue<HBVEMessage> taskQueue;
-	private BlockingQueue<HBVEMessage> decodeTaskQueue;
+	private BlockingQueue<HBVEMessage> decodeTaskQueue; //decode完成后的任务队列
+	private BlockingQueue<DetectedBean> detectTaskQueue; //detect完成后的任务队列
 	
 	public NettyWorkerClientHandler(String name){
 		tName = name;
         taskQueue = new LinkedBlockingQueue();
         decodeTaskQueue = new LinkedBlockingQueue();
+        detectTaskQueue = new LinkedBlockingQueue();
         
-        new Thread(new ProcessThread()).start();
+        new Thread(new DetectThread()).start();
+        new Thread(new ExtractThread()).start();
         for (int i = 0 ;i<SystemConstants.DECODE_THREAD_COUNT; i++) {
             new Thread(new DecodeThread()).start();
         }
@@ -57,17 +59,28 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 
     static private Logger logger = LoggerFactory.getLogger(NettyWorkerClientHandler.class);
     
-    private class ProcessThread implements Runnable{
+    private class DetectedBean{
+        private THIDFaceSDK.Image images[];
+        private THIDFaceSDK.Face faces[][];
+        private List<HBVEMessage> taskList;
+        
+        public DetectedBean(THIDFaceSDK.Image images[], THIDFaceSDK.Face faces[][], List<HBVEMessage> taskList){
+            this.images = images;
+            this.faces = faces;
+            this.taskList = taskList;
+        }
+    }
     
-        public ProcessThread(){
+    public class DetectThread implements Runnable {
+    
+        public DetectThread() {
             
         }
     
         @Override
         public void run() {
-            
-            logger.info("Running ProcessThread...");
-            
+            logger.info("Running DetectThread...");
+    
             while (true){
                 List<HBVEMessage> taskList = new ArrayList<>();
                 for (int i = 0; i < SystemConstants.MAX_SDK_BATCH; i++){
@@ -82,50 +95,137 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
                         e.printStackTrace();
                     }
                 }
-                processTaskList(taskList);
+                detectImages(taskList);
+            }
+        }
+    }
+    
+    private void detectImages(List<HBVEMessage> taskList){
+        
+        logger.info("\nProcess task list, list size:{}\n", taskList.size());
+        
+        List<THIDFaceSDK.Image> thidImageList = new ArrayList<>();
+        
+        //轮询当前的taskList, 找出需要提取特征的image
+        for (int i = 0; i < taskList.size(); i++){
+            
+            HBVEMessage task = taskList.get(i);
+            
+            if (HBVEMessageType.getClientMessageType(task.header.messageType)
+                    .equals(HBVEMessageType.ClientMessageType.Similarity)) {
+                if (task.computeSimilarityPara.type1 == 1) {
+                    thidImageList.add(task.computeSimilarityPara.decodeFace1);
+                }
+                if (task.computeSimilarityPara.type1 == 1) {
+                    thidImageList.add(task.computeSimilarityPara.decodeFace2);
+                }
+            } else if (HBVEMessageType.getClientMessageType(task.header.messageType)
+                    .equals(HBVEMessageType.ClientMessageType.Extract_Template)) {
+                thidImageList.add(task.extractTemplatePara.getDecodeImg());
             }
         }
         
-        private void processTaskList(List<HBVEMessage> taskList){
+        THIDFaceSDK.Image images[] = castImageArray(thidImageList);
+        THIDFaceSDK.Face faces[][] = HisignFaceV9.detectBatch(images);
     
-            logger.info("\nProcess task list, list size:{}\n", taskList.size());
-            
-            List<THIDFaceSDK.Image> thidImageList = new ArrayList<>();
-            
-            //轮询当前的taskList, 找出需要提取特征的image
-            for (int i = 0; i < taskList.size(); i++){
+        DetectedBean detectedBean = new DetectedBean(images, faces, taskList);
+        detectTaskQueue.offer(detectedBean);
+        
+//        HisignFaceV9.ImageTemplate templates[] = HisignFaceV9.getTemplates(images);
+//        doTasks(taskList, templates);
+    }
     
-                HBVEMessage task = taskList.get(i);
+    /**
+     * THIDFaceSDK.Image的list转化成array
+     * @param imageBytesList
+     * @return
+     */
+    public THIDFaceSDK.Image[] castImageArray(List<THIDFaceSDK.Image> imageBytesList){
+        THIDFaceSDK.Image imagesArray[] = new THIDFaceSDK.Image[imageBytesList.size()];
+        int index = 0;
+        for (THIDFaceSDK.Image image : imageBytesList){
+            imagesArray[index++] = image;
+        }
+        return imagesArray;
+    }
     
+    /**
+     * 处理检测人脸的任务
+     */
+    private void processDetectTask(List<HBVEMessage> taskList, THIDFaceSDK.Image images[], THIDFaceSDK.Face faces[][]){
+    
+        List<HBVEMessage> newTaskList = new LinkedList();
+        List<THIDFaceSDK.Image> newImages = new LinkedList();
+        List<THIDFaceSDK.Face[]> newFaces = new LinkedList();
+        
+        int index = 0;
+        for (int i = 0; i < taskList.size(); i++) {
+            HBVEMessage task = taskList.get(i);
+    
+            if (!HBVEMessageType.getClientMessageType(task.header.messageType)
+                    .equals(HBVEMessageType.ClientMessageType.DetectFace)) {
+                newTaskList.add(task);
                 if (HBVEMessageType.getClientMessageType(task.header.messageType)
                         .equals(HBVEMessageType.ClientMessageType.Similarity)) {
                     if (task.computeSimilarityPara.type1 == 1) {
-                        thidImageList.add(task.computeSimilarityPara.decodeFace1);
+                        newImages.add(images[index]);
+                        newFaces.add(faces[index]);
+                        index++;
                     }
-                    if (task.computeSimilarityPara.type1 == 1) {
-                        thidImageList.add(task.computeSimilarityPara.decodeFace2);
+                    if (task.computeSimilarityPara.type2 == 1) {
+                        newImages.add(images[index]);
+                        newFaces.add(faces[index]);
+                        index++;
                     }
                 } else if (HBVEMessageType.getClientMessageType(task.header.messageType)
                         .equals(HBVEMessageType.ClientMessageType.Extract_Template)) {
-                    thidImageList.add(task.extractTemplatePara.getDecodeImg());
+                    newImages.add(images[index]);
+                    newFaces.add(faces[index]);
+                    index++;
+                }
+            } else {
+                SDKResult result = getDetectResult(task.header.faceCount, faces[index]);
+    
+                byte[] uuid = task.header.uuid.getBytes();
+                sendResult(
+                        task.header.messageType,
+                        uuid,
+                        result,
+                        task.ctx
+                );
+            }
+        }
+    }
+    
+    private SDKResult getDetectResult(int faceCount, THIDFaceSDK.Face faces[]){
+        for (int i = 0; i < faceCount && i < faces.length;i++){
+            
+        }
+        return null;
+    }
+    
+    
+    public class ExtractThread implements Runnable{
+    
+        public ExtractThread(){
+            
+        }
+    
+        @Override
+        public void run() {
+    
+            logger.info("Running ExtractThread...");
+    
+            while (true){
+                try {
+                    DetectedBean detectedBean = detectTaskQueue.take();
+                    HisignFaceV9.ImageTemplate[] templates = HisignFaceV9.extractBatch(detectedBean.images, detectedBean.faces);
+                    doTasks(detectedBean.taskList, templates);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
             }
-            
-            THIDFaceSDK.Image images[] = castImageArray(thidImageList);
-            HisignFaceV9.ImageTemplate templates[] = HisignFaceV9.getTemplates(images);
-    
-            doTasks(taskList, templates);
         }
-        
-        public THIDFaceSDK.Image[] castImageArray(List<THIDFaceSDK.Image> imageBytesList){
-            THIDFaceSDK.Image imagesArray[] = new THIDFaceSDK.Image[imageBytesList.size()];
-            int index = 0;
-            for (THIDFaceSDK.Image image : imageBytesList){
-                imagesArray[index++] = image;
-            }
-            return imagesArray;
-        }
-        
         
         private void doTasks(List<HBVEMessage> taskList, HisignFaceV9.ImageTemplate templates[]){
             
@@ -358,7 +458,6 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
                         task.extractTemplatePara = extractTemplatePara;
                         task.extractTemplatePara.setDecodeImg(decode);
                     }
-                    
                     decodeTaskQueue.offer(task);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -368,4 +467,6 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
             }
         }
     }
+    
+    private class
 }

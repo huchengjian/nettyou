@@ -12,12 +12,13 @@ public class HBVEMessageType{
 	}
 	
 	public enum ClientMessageType {
-	    Similarity, Extract_Template, UnknowType;
+	    Similarity, Extract_Template, DetectFace, UnknowType;
 	}
 	
 	public static final byte EXCEPTION = (byte) 0x80;
 	public static final byte CLIENT_COMPUTE_SIMILARITY = 0x01;
 	public static final byte CLIENT_EXTRACT_TEMPLATE = 0x02;
+	public static final byte CLIENT_DETECT_FACE = 0x03;
 	
 	public static final byte WORKER_FLAG = 0x40;
 	public static final byte CLIENT_FLAG = 0x3F;
@@ -53,6 +54,9 @@ public class HBVEMessageType{
 		if (clientTransform == CLIENT_EXTRACT_TEMPLATE) {
 			return ClientMessageType.Extract_Template;
 		}
+        if (clientTransform == CLIENT_DETECT_FACE) {
+            return ClientMessageType.DetectFace;
+        }
 		// Todo add MessageType
 		else {
 			return ClientMessageType.UnknowType;
