@@ -45,7 +45,7 @@ public class Worker {
 				SystemConstants.DECODE_THREAD_COUNT = Integer.parseInt(args[2]);
 				SystemConstants.MAX_SDK_BATCH = Integer.parseInt(args[3]);
 			} catch (NumberFormatException e) {
-				logger.error("Integer parse error. use integer value.");
+				logger.error("Integer parse error. Use integer value.");
 			}
 		}
         

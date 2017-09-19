@@ -90,7 +90,7 @@ public class HisignFaceV9 {
         }
     
         int detect = THIDFaceSDK.DetectFace(images, faces, 0, 0, rectArray);
-        log.debug("Detect image:{}", detect);
+        log.debug("Detect image status:{}", detect);
         
         return faces;
     }
@@ -111,7 +111,7 @@ public class HisignFaceV9 {
         for (int i = 0; i < faces.length; i++) {
             if (faces[i] == null || faces[i].length == 0) {
                 log.debug("face i:{} is null or size 0", i);
-                templates[i] = new ImageTemplate(ImageTemplate.NO_FACE);
+                templates[i] = new ImageTemplate(SDKResult.State.NotDetectFace);
             } else {
 //                log.info("face index:{} size:{}", i, faces[i].length);
                 face_new[faceIndex] = faces[i][0];
@@ -129,7 +129,7 @@ public class HisignFaceV9 {
         int featureIndex = 0;
         for (int i = 0; i < templates.length; i++){
             if (templates[i] == null){
-                templates[i] = new ImageTemplate(features[featureIndex++], ImageTemplate.SUCCESSS);
+                templates[i] = new ImageTemplate(features[featureIndex++], SDKResult.State.Success);
             }
         }
         log.debug("template size:{}", templates.length);
@@ -193,7 +193,7 @@ public class HisignFaceV9 {
         for (int i = 0; i < faces.length; i++) {
             if (faces[i] == null || faces[i].length == 0) {
                 log.debug("face i:{} is null or size 0", i);
-                templates[i] = new ImageTemplate(ImageTemplate.NO_FACE);
+                templates[i] = new ImageTemplate(SDKResult.State.NotDetectFace);
             } else {
                 log.info("face index:{} size:{}", i, faces[i].length);
                 face_new[faceIndex] = faces[i][0];
@@ -211,7 +211,7 @@ public class HisignFaceV9 {
         int featureIndex = 0;
         for (int i = 0; i < templates.length; i++){
             if (templates[i] == null){
-                templates[i] = new ImageTemplate(features[featureIndex++], ImageTemplate.SUCCESSS);
+                templates[i] = new ImageTemplate(features[featureIndex++], SDKResult.State.Success);
             }
             log.info("Image:{} template is null", i);
         }
@@ -231,18 +231,15 @@ public class HisignFaceV9 {
     
     public static class ImageTemplate{
         public byte[] template;
-        public int status = NO_FACE;
+        public SDKResult.State state;
         
-        public static final int NO_FACE = -1;
-        public static final int SUCCESSS = 0;
-    
-        public ImageTemplate(int status){
-            this.status = status;
+        public ImageTemplate(SDKResult.State state){
+            this.state = state;
             this.template = new byte[0];
         }
     
-        public ImageTemplate(byte[] template, int status){
-            this.status = status;
+        public ImageTemplate(byte[] template, SDKResult.State state){
+            this.state = state;
             this.template = template;
         }
     }
@@ -251,7 +248,7 @@ public class HisignFaceV9 {
         ImageTemplate result[] = new ImageTemplate[images.length];
         int index = 0;
         for (ImageTemplate image : result){
-            image = new ImageTemplate(ImageTemplate.NO_FACE);
+            image = new ImageTemplate(SDKResult.State.NotDetectFace);
             result[index++] = image;
         }
         return result;

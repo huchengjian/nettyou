@@ -176,7 +176,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
      */
     private DetectedBean processDetectTask(List<HBVEMessage> taskList, THIDFaceSDK.Image images[], THIDFaceSDK.Face faces[][]){
         
-        logger.info("processDetectTask, taskCount:{}", taskList.size());
+        logger.info("processDetectTask, taskCount:{}", images.length);
     
         List<HBVEMessage> newTaskList = new ArrayList();
         List<THIDFaceSDK.Image> newImages = new ArrayList();
@@ -307,9 +307,9 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
                     else if (HBVEMessageType.getClientMessageType(task.header.messageType)
                             .equals(HBVEMessageType.ClientMessageType.Extract_Template)) {
     
-                        byte template[] = templates[templateIndex++].template;
-                        result.data = template;
-                        result.state = State.Success;
+                        HisignFaceV9.ImageTemplate imageTemplate = templates[templateIndex++];
+                        result.data = imageTemplate.template;
+                        result.state = imageTemplate.state;
                     }else{
                         logger.error("Error Type:{}", task.header.messageType);
                     }
