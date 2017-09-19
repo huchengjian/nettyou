@@ -137,7 +137,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
                 rects.add(task.extractTemplatePara.getRect());
             } else if (HBVEMessageType.getClientMessageType(task.header.messageType)
                     .equals(HBVEMessageType.ClientMessageType.DetectFace)) {
-                imagesList.add(task.extractTemplatePara.getDecodeImg());
+                imagesList.add(task.detectPara.getDecodeImg());
                 faceCounts.add(task.detectPara.getFaceCount());
                 rects.add(null);
             }
@@ -147,9 +147,9 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
         
         THIDFaceSDK.Face faces[][] = HisignFaceV9.detectBatch(faceCounts, rects, images);
     
-        processDetectTask(taskList, images, faces);
+        
     
-        DetectedBean detectedBean = new DetectedBean(images, faces, taskList);
+        DetectedBean detectedBean = processDetectTask(taskList, images, faces);
         extractQueue.offer(detectedBean);
         
 //        HisignFaceV9.ImageTemplate templates[] = HisignFaceV9.getTemplates(images);
@@ -173,7 +173,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
     /**
      * 处理检测人脸的任务, 返回检测人脸的结果
      */
-    private void processDetectTask(List<HBVEMessage> taskList, THIDFaceSDK.Image images[], THIDFaceSDK.Face faces[][]){
+    private DetectedBean processDetectTask(List<HBVEMessage> taskList, THIDFaceSDK.Image images[], THIDFaceSDK.Face faces[][]){
         
         logger.info("processDetectTask, taskCount:{}", taskList.size());
     
@@ -204,7 +204,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
                     newFaces.add(faces[index]);
                 }
             } else {
-                SDKResult result = getDetectResult(task.header.faceCount, faces[index]);
+                SDKResult result = getDetectResult(task.detectPara.getFaceCount(), faces[index]);
     
                 byte[] uuid = task.header.uuid.getBytes();
                 sendResult(
@@ -217,14 +217,13 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
             index++;
         }
     
-        THIDFaceSDK.Image tempImagesArray[] = new THIDFaceSDK.Image[0];
-        THIDFaceSDK.Face tempFacesArray[][] = new THIDFaceSDK.Face[0][];
+        THIDFaceSDK.Image tempImagesArray[] = new THIDFaceSDK.Image[newImages.size()];
+        THIDFaceSDK.Face tempFacesArray[][] = new THIDFaceSDK.Face[newFaces.size()][];
         
         newImages.toArray(tempImagesArray);
         newFaces.toArray(tempFacesArray);
         
-        images = tempImagesArray;
-        faces = tempFacesArray;
+        return new DetectedBean(tempImagesArray, tempFacesArray, newTaskList);
     }
     
     /**
