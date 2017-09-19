@@ -8,6 +8,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import com.hisign.THIDFaceSDK;
+import com.hisign.constants.ValueConstant;
 import com.hisign.hbve.protocol.HBVEMessage;
 import com.hisign.hbve.protocol.HBVEMessageType;
 import com.hisign.netty.worker.SDKResult.State;
@@ -86,11 +87,11 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
                 List<HBVEMessage> taskList = new ArrayList<>();
                 for (int i = 0; i < SystemConstants.MAX_SDK_BATCH; i++){
                     try {
-                        if (taskList.size() > 0 && decodeQueue.size()==0){
+                        if (taskList.size() > 0 && detectQueue.size()==0){
                             //没有可取的task
                             break;
                         }
-                        HBVEMessage task = decodeQueue.take();
+                        HBVEMessage task = detectQueue.take();
                         taskList.add(task);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
@@ -103,11 +104,11 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
     
     private void detectImages(List<HBVEMessage> taskList){
         
-        logger.info("\nProcess task list, list size:{}\n", taskList.size());
+        logger.info("\ndetect Images, list size:{}\n", taskList.size());
         
         int DEFAULT_FACE_COUNT = 1;
         
-        List<THIDFaceSDK.Image> thidImageList = new ArrayList<>();
+        List<THIDFaceSDK.Image> imagesList = new ArrayList<>();
         List<Integer> faceCounts = new ArrayList<>();
         List<THIDFaceSDK.Rect> rects = new ArrayList<>();
         
@@ -119,30 +120,30 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
             
             if (HBVEMessageType.getClientMessageType(task.header.messageType)
                     .equals(HBVEMessageType.ClientMessageType.Similarity)) {
-                if (task.computeSimilarityPara.type1 == 1) {
-                    thidImageList.add(task.computeSimilarityPara.decodeFace1);
+                if (task.computeSimilarityPara.type1 == ValueConstant.IMAGE_TYPE) {
+                    imagesList.add(task.computeSimilarityPara.decodeFace1);
                     faceCounts.add(DEFAULT_FACE_COUNT);
                     rects.add(null);
                 }
-                if (task.computeSimilarityPara.type2 == 1) {
-                    thidImageList.add(task.computeSimilarityPara.decodeFace2);
+                if (task.computeSimilarityPara.type2 ==  ValueConstant.IMAGE_TYPE) {
+                    imagesList.add(task.computeSimilarityPara.decodeFace2);
                     faceCounts.add(DEFAULT_FACE_COUNT);
                     rects.add(null);
                 }
             } else if (HBVEMessageType.getClientMessageType(task.header.messageType)
                     .equals(HBVEMessageType.ClientMessageType.Extract_Template)) {
-                thidImageList.add(task.extractTemplatePara.getDecodeImg());
+                imagesList.add(task.extractTemplatePara.getDecodeImg());
                 faceCounts.add(DEFAULT_FACE_COUNT);
                 rects.add(task.extractTemplatePara.getRect());
             } else if (HBVEMessageType.getClientMessageType(task.header.messageType)
                     .equals(HBVEMessageType.ClientMessageType.DetectFace)) {
-                thidImageList.add(task.extractTemplatePara.getDecodeImg());
+                imagesList.add(task.extractTemplatePara.getDecodeImg());
                 faceCounts.add(task.detectPara.getFaceCount());
                 rects.add(null);
             }
         }
         
-        THIDFaceSDK.Image images[] = castImageArray(thidImageList);
+        THIDFaceSDK.Image images[] = castImageArray(imagesList);
         
         THIDFaceSDK.Face faces[][] = HisignFaceV9.detectBatch(faceCounts, rects, images);
     
@@ -183,7 +184,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
         int index = 0;
         for (int i = 0; i < taskList.size(); i++) {
             HBVEMessage task = taskList.get(i);
-    
+        
             if (!HBVEMessageType.getClientMessageType(task.header.messageType)
                     .equals(HBVEMessageType.ClientMessageType.DetectFace)) {
                 newTaskList.add(task);
@@ -204,7 +205,6 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
                 }
             } else {
                 SDKResult result = getDetectResult(task.header.faceCount, faces[index]);
-                
     
                 byte[] uuid = task.header.uuid.getBytes();
                 sendResult(
@@ -306,6 +306,8 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
                         byte template[] = templates[templateIndex++].template;
                         result.data = template;
                         result.state = State.Success;
+                    }else{
+                        logger.error("Error Type:{}", task.header.messageType);
                     }
                 }finally {
                     byte[] uuid = task.header.uuid.getBytes();
