@@ -72,14 +72,23 @@ public class HisignFaceV9 {
     public static THIDFaceSDK.Face[][] detectBatch(List<Integer> faceCountList, List<THIDFaceSDK.Rect> rects, THIDFaceSDK.Image images[]){
     
         THIDFaceSDK.Face faces[][] = new THIDFaceSDK.Face[images.length][];
-        
-        for (int i = 0;i<faceCountList.size();i++){
-            faces[i] = new THIDFaceSDK.Face[faceCountList.get(i)];
-        }
     
         THIDFaceSDK.Rect rectArray[] = new THIDFaceSDK.Rect[rects.size()];
         rects.toArray(rectArray);
         
+        for (int i = 0;i<faceCountList.size();i++){
+            faces[i] = new THIDFaceSDK.Face[faceCountList.get(i)];
+            
+            //够照默认的react, 若rect为空会导致DetectFace出错
+            if (rectArray[i] == null){
+                rectArray[i] = new THIDFaceSDK.Rect();
+                rectArray[i].left = 0;
+                rectArray[i].top = 0;
+                rectArray[i].width = images[i].width;
+                rectArray[i].height = images[i].height;
+            }
+        }
+    
         int detect = THIDFaceSDK.DetectFace(images, faces, 0, 0, rectArray);
         log.debug("Detect image:{}", detect);
         
@@ -87,6 +96,8 @@ public class HisignFaceV9 {
     }
     
     public static ImageTemplate[] extractBatch(THIDFaceSDK.Image images[], THIDFaceSDK.Face faces[][]){
+        
+        log.info("ExtarctBatch, list size:{}\n", images.length);
     
         ImageTemplate templates[] = new ImageTemplate[images.length];
     
@@ -102,7 +113,7 @@ public class HisignFaceV9 {
                 log.debug("face i:{} is null or size 0", i);
                 templates[i] = new ImageTemplate(ImageTemplate.NO_FACE);
             } else {
-                log.info("face index:{} size:{}", i, faces[i].length);
+//                log.info("face index:{} size:{}", i, faces[i].length);
                 face_new[faceIndex] = faces[i][0];
                 images_new[faceIndex] = images[i];
                 faceIndex++;
@@ -120,7 +131,6 @@ public class HisignFaceV9 {
             if (templates[i] == null){
                 templates[i] = new ImageTemplate(features[featureIndex++], ImageTemplate.SUCCESSS);
             }
-            log.info("Image:{} template is null", i);
         }
         log.debug("template size:{}", templates.length);
         return templates;
