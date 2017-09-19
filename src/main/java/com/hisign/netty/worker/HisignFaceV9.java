@@ -4,7 +4,6 @@ import com.hisign.THIDFaceSDK;
 import com.hisign.exception.HisignSDKException;
 import com.hisign.exception.NoFaceDetectException;
 import com.hisign.exception.ParseParaException;
-import com.hisign.hbve.protocol.HBVEMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,66 +15,12 @@ import java.util.List;
  */
 public class HisignFaceV9 {
     
-    public static final int MAX_DETECT_FACE = 20;
-    
     static private Logger log = LoggerFactory.getLogger(HisignFaceV9.class);
     
     static byte[] img1, img2;
     
     public static void main(String[] args) {
         
-    }
-    
-    public static ImageTemplate[]  getTemplatesTest(THIDFaceSDK.Image images[]){
-        ImageTemplate result[] = new ImageTemplate[images.length];
-        int index = 0;
-        for (ImageTemplate image : result){
-            image = new ImageTemplate(ImageTemplate.NO_FACE);
-            result[index++] = image;
-        }
-        return result;
-    }
-    
-    public static float compareFromTwoTemplatesTest(byte[] fea1, byte[] fea2) {
-        return 0.99f;
-    }
-    
-    public static void test() throws IOException {
-        
-        System.out.println("test method!");
-        
-        THIDFaceSDK.Image image1 = new THIDFaceSDK.Image();
-        int a1 = THIDFaceSDK.DecodeJPG(image1, img1);
-        
-        THIDFaceSDK.Image image2 = new THIDFaceSDK.Image();
-        int a2 = THIDFaceSDK.DecodeJPG(image2, img2);
-        
-        System.out.println(a1 + ":" + a2);
-        
-        THIDFaceSDK.Image imgs[] = new THIDFaceSDK.Image[2];
-        imgs[0] = image1;
-        imgs[1] = image2;
-        
-        THIDFaceSDK.Face faces[][] = new THIDFaceSDK.Face[2][10];
-        int detect = THIDFaceSDK.DetectFace(imgs, faces, 0, 0, null);
-        
-        System.out.println("detect:" + detect);
-        
-        THIDFaceSDK.Face face_new[] = new THIDFaceSDK.Face[2];
-        face_new[0] = faces[0][0];
-        face_new[1] = faces[1][0];
-        
-        byte[][] features = new byte[2][];
-        int ex = THIDFaceSDK.ExtractFeature(imgs, face_new, features);
-        System.out.println("extract:" + ex);
-        
-        float scores[] = new float[10];
-        int verify = THIDFaceSDK.Verify(features[0], features[1], scores);
-        System.out.println("verify:" + verify);
-        
-        for (float sc : scores) {
-            System.out.println("print score:" + sc);
-        }
     }
     
     /**
@@ -132,7 +77,7 @@ public class HisignFaceV9 {
             faces[i] = new THIDFaceSDK.Face[faceCountList.get(i)];
         }
     
-        THIDFaceSDK.Rect rectArray[] = new THIDFaceSDK.Rect[0];
+        THIDFaceSDK.Rect rectArray[] = new THIDFaceSDK.Rect[rects.size()];
         rects.toArray(rectArray);
         
         int detect = THIDFaceSDK.DetectFace(images, faces, 0, 0, rectArray);
@@ -289,6 +234,58 @@ public class HisignFaceV9 {
         public ImageTemplate(byte[] template, int status){
             this.status = status;
             this.template = template;
+        }
+    }
+    
+    public static ImageTemplate[]  getTemplatesTest(THIDFaceSDK.Image images[]){
+        ImageTemplate result[] = new ImageTemplate[images.length];
+        int index = 0;
+        for (ImageTemplate image : result){
+            image = new ImageTemplate(ImageTemplate.NO_FACE);
+            result[index++] = image;
+        }
+        return result;
+    }
+    
+    public static float compareFromTwoTemplatesTest(byte[] fea1, byte[] fea2) {
+        return 0.99f;
+    }
+    
+    public static void test() throws IOException {
+        
+        System.out.println("test method!");
+        
+        THIDFaceSDK.Image image1 = new THIDFaceSDK.Image();
+        int a1 = THIDFaceSDK.DecodeJPG(image1, img1);
+        
+        THIDFaceSDK.Image image2 = new THIDFaceSDK.Image();
+        int a2 = THIDFaceSDK.DecodeJPG(image2, img2);
+        
+        System.out.println(a1 + ":" + a2);
+        
+        THIDFaceSDK.Image imgs[] = new THIDFaceSDK.Image[2];
+        imgs[0] = image1;
+        imgs[1] = image2;
+        
+        THIDFaceSDK.Face faces[][] = new THIDFaceSDK.Face[2][10];
+        int detect = THIDFaceSDK.DetectFace(imgs, faces, 0, 0, null);
+        
+        System.out.println("detect:" + detect);
+        
+        THIDFaceSDK.Face face_new[] = new THIDFaceSDK.Face[2];
+        face_new[0] = faces[0][0];
+        face_new[1] = faces[1][0];
+        
+        byte[][] features = new byte[2][];
+        int ex = THIDFaceSDK.ExtractFeature(imgs, face_new, features);
+        System.out.println("extract:" + ex);
+        
+        float scores[] = new float[10];
+        int verify = THIDFaceSDK.Verify(features[0], features[1], scores);
+        System.out.println("verify:" + verify);
+        
+        for (float sc : scores) {
+            System.out.println("print score:" + sc);
         }
     }
 }
