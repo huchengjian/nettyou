@@ -4,6 +4,7 @@ import com.hisign.THIDFaceSDK;
 import com.hisign.exception.HisignSDKException;
 import com.hisign.exception.NoFaceDetectException;
 import com.hisign.exception.ParseParaException;
+import com.hisign.util.SystemUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +53,7 @@ public class HisignFaceV9 {
     public static THIDFaceSDK.Image deocdeImage(byte[] img){
         THIDFaceSDK.Image tempImage = new THIDFaceSDK.Image();
         int decode = THIDFaceSDK.DecodeJPG(tempImage, img);
-        log.debug("Decode image:{}", decode);
+        log.debug("Decode image status:{}", decode);
         if (decode != 0){
             tempImage = null;
         }
@@ -84,13 +85,17 @@ public class HisignFaceV9 {
                 rectArray[i] = new THIDFaceSDK.Rect();
                 rectArray[i].left = 0;
                 rectArray[i].top = 0;
-                rectArray[i].width = images[i].width;
-                rectArray[i].height = images[i].height;
+                rectArray[i].width = images[i] == null ? 0 : images[i].width;
+                rectArray[i].height = images[i] == null ? 0 : images[i].height;
             }
         }
     
         int detect = THIDFaceSDK.DetectFace(images, faces, 0, 0, rectArray);
         log.debug("Detect image status:{}", detect);
+    
+//        for (int i = 0; i< images.length; i++){
+//            System.out.printf("%s---image raw len:%d, faces count:%d, rect:%s\n", i, images[i].raw.length, faces[i].length, rectArray[i].toString());
+//        }
         
         return faces;
     }
@@ -106,7 +111,8 @@ public class HisignFaceV9 {
         int successCount = getSuccessImageCount(faces);
         THIDFaceSDK.Face face_new[] = new THIDFaceSDK.Face[successCount];
         THIDFaceSDK.Image images_new[] = new THIDFaceSDK.Image[successCount];
-        log.info("Success image count:" + successCount);
+        log.info("Success detect image count:" + successCount);
+        
         int faceIndex = 0;
         for (int i = 0; i < faces.length; i++) {
             if (faces[i] == null || faces[i].length == 0) {

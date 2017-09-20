@@ -211,13 +211,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
                 SDKResult result = getDetectResult(task.detectPara.getFaceCount(), faces[index]);
                 index++;
     
-                byte[] uuid = task.header.uuid.getBytes();
-                sendResult(
-                        task.header.messageType,
-                        uuid,
-                        result,
-                        task.ctx
-                );
+                sendResult(task, result);
             }
             
         }
@@ -240,6 +234,11 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
      * @return
      */
     private SDKResult getDetectResult(int faceCount, THIDFaceSDK.Face faces[]){
+        
+        if (faces.length == 0){
+            return new SDKResult(State.NotDetectFace, new byte[0]);
+        }
+        
         int count = faceCount > faces.length ? faces.length : faceCount;
         int byteCount = 1 + 4*4*count;
         
@@ -314,13 +313,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
                         logger.error("Error Type:{}", task.header.messageType);
                     }
                 }finally {
-                    byte[] uuid = task.header.uuid.getBytes();
-                    sendResult(
-                            task.header.messageType,
-                            uuid,
-                            result,
-                            task.ctx
-                    );
+                    sendResult(task, result);
                 }
             }
         }
@@ -433,6 +426,11 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
     	return result;
     }
     
+    public void sendResult(HBVEMessage task, SDKResult result){
+        byte[] uuid = task.header.uuid.getBytes();
+        sendResult(task.header.messageType, uuid, result, task.ctx);
+    }
+    
     public void sendResult(byte type, byte[] uuid, SDKResult re, ChannelHandlerContext ctx){
     
         logger.info("Send Result to master, type:{}, re.data:{}", type, SystemUtil.bytesToHexString(re.data));
@@ -491,13 +489,13 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
                             decodeImg2 = HisignFaceV9.deocdeImage(computeSimilarityPara.getFace2());
                         }
                         if(decodeImg1 == null || decodeImg2 == null){
-                            //TODO send
+                            SDKResult result = new SDKResult(State.ImageError, new byte[0]);
+                            sendResult(task, result);
+                            continue;
                         }
-    
                         task.computeSimilarityPara = computeSimilarityPara;
                         task.computeSimilarityPara.decodeFace1 = decodeImg1;
                         task.computeSimilarityPara.decodeFace2 = decodeImg2;
-                        
                         
                     }
                     else if (HBVEMessageType.getClientMessageType(task.header.messageType)
@@ -508,7 +506,9 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
                         THIDFaceSDK.Image decode = HisignFaceV9.deocdeImage(extractTemplatePara.getData());
     
                         if(decode == null){
-                            //TODO send
+                            SDKResult result = new SDKResult(State.ImageError, new byte[0]);
+                            sendResult(task, result);
+                            continue;
                         }
                         
                         task.extractTemplatePara = extractTemplatePara;
@@ -521,9 +521,10 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
                         THIDFaceSDK.Image decodeImg = HisignFaceV9.deocdeImage(detectPara.getImgData());
     
                         if(decodeImg == null){
-                            //TODO send result back
+                            SDKResult result = new SDKResult(State.ImageError, new byte[0]);
+                            sendResult(task, result);
+                            continue;
                         }
-    
                         task.detectPara = detectPara;
                         task.detectPara.setDecodeImg(decodeImg);
                     }
