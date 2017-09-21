@@ -3,7 +3,7 @@ package com.hisign.netty.worker;
 public class SDKResult {
 
 	public enum State {
-		Success(0), NotDetectFace(-1), SDKError(-2), ParameterError(-3), OtherError(-4), ImageError(-5), Null(0);
+		Success(0), NotDetectFace(-1), SDKError(-2), ParameterError(-3), OtherError(-4), ImageError(-5), Image1Error(-51), Image2Error(-52), Null(0);
 
 		public int value;
 

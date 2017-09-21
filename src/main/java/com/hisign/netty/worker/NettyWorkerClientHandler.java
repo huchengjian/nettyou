@@ -115,8 +115,6 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
     
     private void detectImages(List<HBVEMessage> taskList){
         
-        logger.info("Detect Images, list size:{}\n", taskList.size());
-        
         List<THIDFaceSDK.Image> imagesList = new ArrayList<>();
         List<Integer> faceCounts = new ArrayList<>();
         List<THIDFaceSDK.Rect> rects = new ArrayList<>();
@@ -155,8 +153,6 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
         THIDFaceSDK.Image images[] = castImageArray(imagesList);
         
         THIDFaceSDK.Face faces[][] = HisignFaceV9.detectBatch(faceCounts, rects, images);
-    
-        
     
         DetectedBean detectedBean = processDetectTask(taskList, images, faces);
         
@@ -495,15 +491,21 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
                         THIDFaceSDK.Image decodeImg1 = null, decodeImg2 = null;
                         if (computeSimilarityPara.type1 == 1){
                             decodeImg1 = HisignFaceV9.deocdeImage(computeSimilarityPara.getFace1());
+                            if(decodeImg1 == null){
+                                SDKResult result = new SDKResult(State.Image1Error, new byte[0]);
+                                sendResult(task, result);
+                                continue;
+                            }
                         }
                         if (computeSimilarityPara.type2 == 1){
                             decodeImg2 = HisignFaceV9.deocdeImage(computeSimilarityPara.getFace2());
+                            if(decodeImg2 == null){
+                                SDKResult result = new SDKResult(State.Image2Error, new byte[0]);
+                                sendResult(task, result);
+                                continue;
+                            }
                         }
-                        if(decodeImg1 == null || decodeImg2 == null){
-                            SDKResult result = new SDKResult(State.ImageError, new byte[0]);
-                            sendResult(task, result);
-                            continue;
-                        }
+                        
                         task.computeSimilarityPara = computeSimilarityPara;
                         task.computeSimilarityPara.decodeFace1 = decodeImg1;
                         task.computeSimilarityPara.decodeFace2 = decodeImg2;

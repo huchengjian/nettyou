@@ -75,6 +75,9 @@ public class HisignFaceV9 {
     
     public static THIDFaceSDK.Face[][] detectBatch(List<Integer> faceCountList, List<THIDFaceSDK.Rect> rects, THIDFaceSDK.Image images[]){
     
+        System.out.println();
+        log.info("Detect Images, list size:{}", faceCountList.size());
+    
         THIDFaceSDK.Face faces[][] = new THIDFaceSDK.Face[images.length][];
     
         THIDFaceSDK.Rect rectArray[] = new THIDFaceSDK.Rect[rects.size()];
@@ -105,8 +108,9 @@ public class HisignFaceV9 {
     }
     
     public static ImageTemplate[] extractBatch(THIDFaceSDK.Image images[], THIDFaceSDK.Face faces[][]){
-        
-        log.info("ExtarctBatch, list size:{}\n", images.length);
+    
+        System.out.println();
+        log.info("ExtarctBatch, list size:{}", images.length);
     
         ImageTemplate templates[] = new ImageTemplate[images.length];
     
