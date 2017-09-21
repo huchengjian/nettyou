@@ -2,6 +2,7 @@ package com.hisign.netty.worker.handler;
 
 import com.hisign.THIDFaceSDK;
 import com.hisign.exception.ParseParaException;
+import com.hisign.netty.worker.HisignFaceV9;
 
 /**
  * Created by hugo on 9/18/17.
@@ -46,7 +47,16 @@ public class DetectHandler extends WorkerHandler{
         public static DetectHandler.DetectPara paraseData(byte[] para)
                 throws ParseParaException {
             DetectHandler.DetectPara detectPar = new DetectHandler.DetectPara();
-            detectPar.setFaceCount(getByte(para, 0));
+    
+            //默认的人脸数量判断, 超出MaximumCount判断
+            int faceCount = getByte(para, 0);
+            if (faceCount <= 0){
+                faceCount = HisignFaceV9.DefaultCount;
+            }else if (faceCount >HisignFaceV9.MaximumCount){
+                faceCount = HisignFaceV9.MaximumCount;
+            }
+            
+            detectPar.setFaceCount(faceCount);
             detectPar.setImgData(getBytes(para, 1, para.length));
             return detectPar;
         }

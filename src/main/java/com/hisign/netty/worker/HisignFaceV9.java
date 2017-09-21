@@ -16,6 +16,9 @@ import java.util.List;
  */
 public class HisignFaceV9 {
     
+    public final static int DefaultCount = 1;
+    public final static int MaximumCount = 20;
+    
     static private Logger log = LoggerFactory.getLogger(HisignFaceV9.class);
     
     static byte[] img1, img2;
@@ -78,6 +81,7 @@ public class HisignFaceV9 {
         rects.toArray(rectArray);
         
         for (int i = 0;i<faceCountList.size();i++){
+            
             faces[i] = new THIDFaceSDK.Face[faceCountList.get(i)];
             
             //够照默认的react, 若rect为空会导致DetectFace出错

@@ -6,21 +6,24 @@ import com.hisign.bean.ClientRequest;
 import com.hisign.util.SystemUtil;
 
 public class SystemConstants {
+    
+    public static int DECODE_THREAD_COUNT = 2;
+    public static int DETECT_THREAD_COUNT = 4;
+    public static int EXTRACT_THREAD_COUNT = 2;
 	
 	public static String SDKVersion = "8.3";
 	
 	public static int MAX_SDK_BATCH = 16;
 	
 	public static int MaxWorker = 1;
-	public static int DECODE_THREAD_COUNT = 4;
+	
 	public static int NettyServerPort = 8091;
 	public static String NettyServerAddr = "127.0.0.1";
 	
 	public static String TOKEN = "HISIGN_API_TOKEN";
-	
 	public static String UTF8 = "UTF-8";
-	
 	public static String MAGIC = "HBVE";
+	
 	public static byte[] MAGIC_BYTES = MAGIC.getBytes();
 	public static int CURRENT_VERSION = 1;
 	public static byte[] CURRENT_VERSION_BYTES = SystemUtil.int2Bytes(CURRENT_VERSION);

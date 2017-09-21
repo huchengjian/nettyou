@@ -50,6 +50,8 @@ public class SystemUtil {
 	    return ByteBuffer.allocate(8).putLong(value).array();
 	}
 
+	
+	@Deprecated
 	public static byte[] float2byte(float f) {
 
 		// 把float转换为byte[]
@@ -158,6 +160,10 @@ public class SystemUtil {
                 (b[0] & 0xFF) << 24;
     }
     
+    public static byte[] float2Bytes(float a){
+        return SystemUtil.int2Bytes(Float.floatToIntBits(a));
+    }
+    
     
     //byte 与 int 的相互转换
     public static byte intToByte(int x) {
@@ -167,6 +173,7 @@ public class SystemUtil {
     public static void main(String[] args) {
 		Integer s;
 		int x = Float.floatToIntBits((float) 9.375);
+        ByteBuffer.allocate(500);
 	}
 	public static void createFile(String path, byte[] content) throws IOException {  
 		  

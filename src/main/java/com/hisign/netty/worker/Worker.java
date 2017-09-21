@@ -43,13 +43,16 @@ public class Worker {
 				logger.info("allServers:"+allServers);
 				port = Integer.parseInt(args[1]);
 				SystemConstants.DECODE_THREAD_COUNT = Integer.parseInt(args[2]);
-				SystemConstants.MAX_SDK_BATCH = Integer.parseInt(args[3]);
+				SystemConstants.DETECT_THREAD_COUNT = Integer.parseInt(args[3]);
+				SystemConstants.EXTRACT_THREAD_COUNT = Integer.parseInt(args[4]);
 			} catch (NumberFormatException e) {
 				logger.error("Integer parse error. Use integer value.");
 			}
 		}
         
-        logger.info("------------启动HBVE Worker服务, MAX_SDK_BATCH:{}-----------------\n", SystemConstants.MaxWorker);
+        logger.info("-----------Start HBVE Worker Service, THREAD_COUNT:{}:{}:{}-----------------\n",
+                SystemConstants.DECODE_THREAD_COUNT,
+                SystemConstants.DETECT_THREAD_COUNT);
 
 		exetractTemplatePool = Executors.newFixedThreadPool(SystemConstants.MaxWorker);
 

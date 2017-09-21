@@ -44,18 +44,30 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 	
 	public NettyWorkerClientHandler(String name){
 		tName = name;
+		
         decodeQueue = new LinkedBlockingQueue();
         detectQueue = new LinkedBlockingQueue();
         extractQueue = new LinkedBlockingQueue();
         
-        new Thread(new DetectThread()).start();
-        new Thread(new ExtractThread()).start();
-        for (int i = 0 ;i<SystemConstants.DECODE_THREAD_COUNT; i++) {
-            new Thread(new DecodeThread()).start();
-        }
+       startThreads();
 	}
-	
-	byte[] currUUID = {};
+    
+    private void startThreads() {
+        
+        for (int i = 0; i < SystemConstants.DECODE_THREAD_COUNT; i++) {
+            new Thread(new NettyWorkerClientHandler.DecodeThread()).start();
+        }
+        
+        for (int i = 0; i < SystemConstants.DETECT_THREAD_COUNT; i++) {
+            new Thread(new NettyWorkerClientHandler.DetectThread()).start();
+        }
+        
+        for (int i = 0; i < SystemConstants.EXTRACT_THREAD_COUNT; i++) {
+            new Thread(new NettyWorkerClientHandler.ExtractThread()).start();
+        }
+    }
+    
+    byte[] currUUID = {};
 	int currType = 0;
 
     static private Logger logger = LoggerFactory.getLogger(NettyWorkerClientHandler.class);
@@ -105,8 +117,6 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
         
         logger.info("Detect Images, list size:{}\n", taskList.size());
         
-        int DEFAULT_FACE_COUNT = 1;
-        
         List<THIDFaceSDK.Image> imagesList = new ArrayList<>();
         List<Integer> faceCounts = new ArrayList<>();
         List<THIDFaceSDK.Rect> rects = new ArrayList<>();
@@ -121,18 +131,18 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
                     .equals(HBVEMessageType.ClientMessageType.Similarity)) {
                 if (task.computeSimilarityPara.type1 == ValueConstant.IMAGE_TYPE) {
                     imagesList.add(task.computeSimilarityPara.decodeFace1);
-                    faceCounts.add(DEFAULT_FACE_COUNT);
+                    faceCounts.add(HisignFaceV9.DefaultCount);
                     rects.add(null);
                 }
                 if (task.computeSimilarityPara.type2 ==  ValueConstant.IMAGE_TYPE) {
                     imagesList.add(task.computeSimilarityPara.decodeFace2);
-                    faceCounts.add(DEFAULT_FACE_COUNT);
+                    faceCounts.add(HisignFaceV9.DefaultCount);
                     rects.add(null);
                 }
             } else if (HBVEMessageType.getClientMessageType(task.header.messageType)
                     .equals(HBVEMessageType.ClientMessageType.Extract_Template)) {
                 imagesList.add(task.extractTemplatePara.getDecodeImg());
-                faceCounts.add(DEFAULT_FACE_COUNT);
+                faceCounts.add(HisignFaceV9.DefaultCount);
                 rects.add(task.extractTemplatePara.getRect());
             } else if (HBVEMessageType.getClientMessageType(task.header.messageType)
                     .equals(HBVEMessageType.ClientMessageType.DetectFace)) {
@@ -240,7 +250,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
         }
         
         int count = faceCount > faces.length ? faces.length : faceCount;
-        int byteCount = 1 + 4*4*count;
+        int byteCount = 1 + 4*5*count;
         
         ByteBuf byteBuf = Unpooled.buffer(byteCount);
         byteBuf.writeByte(count);
@@ -250,6 +260,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
             byteBuf.writeBytes(SystemUtil.int2Bytes(faces[i].rect.top));
             byteBuf.writeBytes(SystemUtil.int2Bytes(faces[i].rect.width));
             byteBuf.writeBytes(SystemUtil.int2Bytes(faces[i].rect.height));
+            byteBuf.writeBytes(SystemUtil.float2Bytes(faces[i].confidence));
         }
         
         byte data[] = new byte[byteCount];
@@ -433,7 +444,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
     
     public void sendResult(byte type, byte[] uuid, SDKResult re, ChannelHandlerContext ctx){
     
-        logger.info("Send Result to master, type:{}, re.data:{}", type, SystemUtil.bytesToHexString(re.data));
+        logger.info("Send Result to master, type:{}, re.data len:{}", type, re.data.length);
     
         int messageLen = 1 + uuid.length + 1 + re.data.length; //数据包大小。 type + uuid + state + data
     	ByteBuf byteBuf = Unpooled.buffer(messageLen + 4);
