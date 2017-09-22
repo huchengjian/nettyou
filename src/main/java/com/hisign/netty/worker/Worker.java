@@ -45,10 +45,14 @@ public class Worker {
 				SystemConstants.DECODE_THREAD_COUNT = Integer.parseInt(args[2]);
 				SystemConstants.DETECT_THREAD_COUNT = Integer.parseInt(args[3]);
 				SystemConstants.EXTRACT_THREAD_COUNT = Integer.parseInt(args[4]);
+				SystemConstants.WORK_MODE = Integer.parseInt(args[5]);
+				
 			} catch (NumberFormatException e) {
 				logger.error("Integer parse error. Use integer value.");
 			}
 		}
+		
+		SDKThreads.start();
         
         logger.info("-----------Start HBVE Worker Service, THREAD_COUNT:{}:{}:{}-----------------\n",
                 SystemConstants.DECODE_THREAD_COUNT,

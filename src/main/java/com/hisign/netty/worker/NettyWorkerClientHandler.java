@@ -37,294 +37,17 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
 	public String tName;
 	
 	boolean isFirstReq = true;
-	
-	private BlockingQueue<HBVEMessage> decodeQueue; //需要decode的队列
-	private BlockingQueue<HBVEMessage> detectQueue; //需要detect的队列
-	private BlockingQueue<DetectedBean> extractQueue; //需要extract的队列
+    
+    static private Logger logger = LoggerFactory.getLogger(NettyWorkerClientHandler.class);
 	
 	public NettyWorkerClientHandler(String name){
 		tName = name;
-		
-        decodeQueue = new LinkedBlockingQueue();
-        detectQueue = new LinkedBlockingQueue();
-        extractQueue = new LinkedBlockingQueue();
-        
-       startThreads();
 	}
-    
-    private void startThreads() {
-        
-        for (int i = 0; i < SystemConstants.DECODE_THREAD_COUNT; i++) {
-            new Thread(new NettyWorkerClientHandler.DecodeThread()).start();
-        }
-        
-        for (int i = 0; i < SystemConstants.DETECT_THREAD_COUNT; i++) {
-            new Thread(new NettyWorkerClientHandler.DetectThread()).start();
-        }
-        
-        for (int i = 0; i < SystemConstants.EXTRACT_THREAD_COUNT; i++) {
-            new Thread(new NettyWorkerClientHandler.ExtractThread()).start();
-        }
-    }
     
     byte[] currUUID = {};
 	int currType = 0;
 
-    static private Logger logger = LoggerFactory.getLogger(NettyWorkerClientHandler.class);
     
-    private class DetectedBean{
-        private THIDFaceSDK.Image images[];
-        private THIDFaceSDK.Face faces[][];
-        private List<HBVEMessage> taskList;
-        
-        public DetectedBean(THIDFaceSDK.Image images[], THIDFaceSDK.Face faces[][], List<HBVEMessage> taskList){
-            this.images = images;
-            this.faces = faces;
-            this.taskList = taskList;
-        }
-    }
-    
-    public class DetectThread implements Runnable {
-    
-        public DetectThread() {
-            
-        }
-    
-        @Override
-        public void run() {
-            logger.info("Running DetectThread...");
-    
-            while (true){
-                List<HBVEMessage> taskList = new ArrayList<>();
-                for (int i = 0; i < SystemConstants.MAX_SDK_BATCH; i++){
-                    try {
-                        if (taskList.size() > 0 && detectQueue.size()==0){
-                            //没有可取的task
-                            break;
-                        }
-                        HBVEMessage task = detectQueue.take();
-                        taskList.add(task);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-                detectImages(taskList);
-            }
-        }
-    }
-    
-    private void detectImages(List<HBVEMessage> taskList){
-        
-        List<THIDFaceSDK.Image> imagesList = new ArrayList<>();
-        List<Integer> faceCounts = new ArrayList<>();
-        List<THIDFaceSDK.Rect> rects = new ArrayList<>();
-        
-        //轮询当前的taskList, 找出需要提取特征的image
-        for (int i = 0; i < taskList.size(); i++){
-            
-            HBVEMessage task = taskList.get(i);
-            
-            
-            if (HBVEMessageType.getClientMessageType(task.header.messageType)
-                    .equals(HBVEMessageType.ClientMessageType.Similarity)) {
-                if (task.computeSimilarityPara.type1 == ValueConstant.IMAGE_TYPE) {
-                    imagesList.add(task.computeSimilarityPara.decodeFace1);
-                    faceCounts.add(HisignFaceV9.DefaultCount);
-                    rects.add(null);
-                }
-                if (task.computeSimilarityPara.type2 ==  ValueConstant.IMAGE_TYPE) {
-                    imagesList.add(task.computeSimilarityPara.decodeFace2);
-                    faceCounts.add(HisignFaceV9.DefaultCount);
-                    rects.add(null);
-                }
-            } else if (HBVEMessageType.getClientMessageType(task.header.messageType)
-                    .equals(HBVEMessageType.ClientMessageType.Extract_Template)) {
-                imagesList.add(task.extractTemplatePara.getDecodeImg());
-                faceCounts.add(HisignFaceV9.DefaultCount);
-                rects.add(task.extractTemplatePara.getRect());
-            } else if (HBVEMessageType.getClientMessageType(task.header.messageType)
-                    .equals(HBVEMessageType.ClientMessageType.DetectFace)) {
-                imagesList.add(task.detectPara.getDecodeImg());
-                faceCounts.add(task.detectPara.getFaceCount());
-                rects.add(null);
-            }
-        }
-        
-        THIDFaceSDK.Image images[] = castImageArray(imagesList);
-        
-        THIDFaceSDK.Face faces[][] = HisignFaceV9.detectBatch(faceCounts, rects, images);
-    
-        DetectedBean detectedBean = processDetectTask(taskList, images, faces);
-        
-        if (detectedBean.taskList.size()!=0){
-            extractQueue.offer(detectedBean);
-        }
-//        HisignFaceV9.ImageTemplate templates[] = HisignFaceV9.getTemplates(images);
-//        doTasks(taskList, templates);
-    }
-    
-    /**
-     * THIDFaceSDK.Image的list转化成array
-     * @param imageBytesList
-     * @return
-     */
-    public THIDFaceSDK.Image[] castImageArray(List<THIDFaceSDK.Image> imageBytesList){
-        THIDFaceSDK.Image imagesArray[] = new THIDFaceSDK.Image[imageBytesList.size()];
-        int index = 0;
-        for (THIDFaceSDK.Image image : imageBytesList){
-            imagesArray[index++] = image;
-        }
-        return imagesArray;
-    }
-    
-    /**
-     * 处理检测人脸的任务, 返回检测人脸的结果
-     */
-    private DetectedBean processDetectTask(List<HBVEMessage> taskList, THIDFaceSDK.Image images[], THIDFaceSDK.Face faces[][]){
-        
-        logger.info("processDetectTask, taskCount:{}", images.length);
-    
-        List<HBVEMessage> newTaskList = new ArrayList();
-        List<THIDFaceSDK.Image> newImages = new ArrayList();
-        List<THIDFaceSDK.Face[]> newFaces = new ArrayList<>();
-        
-        int index = 0;
-        for (int i = 0; i < taskList.size(); i++) {
-            HBVEMessage task = taskList.get(i);
-        
-            if (!HBVEMessageType.getClientMessageType(task.header.messageType)
-                    .equals(HBVEMessageType.ClientMessageType.DetectFace)) {
-                newTaskList.add(task);
-                if (HBVEMessageType.getClientMessageType(task.header.messageType)
-                        .equals(HBVEMessageType.ClientMessageType.Similarity)) {
-                    if (task.computeSimilarityPara.type1 == 1) {
-                        newImages.add(images[index]);
-                        newFaces.add(faces[index]);
-                        index++;
-                    }
-                    if (task.computeSimilarityPara.type2 == 1) {
-                        newImages.add(images[index]);
-                        newFaces.add(faces[index]);
-                        index++;
-                    }
-                } else if (HBVEMessageType.getClientMessageType(task.header.messageType)
-                        .equals(HBVEMessageType.ClientMessageType.Extract_Template)) {
-                    newImages.add(images[index]);
-                    newFaces.add(faces[index]);
-                    index++;
-                }
-            } else {
-                SDKResult result = getDetectResult(task.detectPara.getFaceCount(), faces[index]);
-                index++;
-    
-                sendResult(task, result);
-            }
-            
-        }
-    
-        THIDFaceSDK.Image tempImagesArray[] = new THIDFaceSDK.Image[newImages.size()];
-        THIDFaceSDK.Face tempFacesArray[][] = new THIDFaceSDK.Face[newFaces.size()][];
-        
-        newImages.toArray(tempImagesArray);
-        newFaces.toArray(tempFacesArray);
-        
-        return new DetectedBean(tempImagesArray, tempFacesArray, newTaskList);
-    }
-    
-    /**
-     * SDKResult返回值格式
-     *
-     * state(1 byte) - count(1 byte) - face_rect(4*4*count byte:{left, top, width, height}, 每个属性占位4 byte)
-     * @param faceCount
-     * @param faces
-     * @return
-     */
-    private SDKResult getDetectResult(int faceCount, THIDFaceSDK.Face faces[]){
-        
-        if (faces.length == 0){
-            return new SDKResult(State.NotDetectFace, new byte[0]);
-        }
-        
-        int count = faceCount > faces.length ? faces.length : faceCount;
-        int byteCount = 1 + 4*5*count;
-        
-        ByteBuf byteBuf = Unpooled.buffer(byteCount);
-        byteBuf.writeByte(count);
-        
-        for (int i = 0; i < count; i++){
-            byteBuf.writeBytes(SystemUtil.int2Bytes(faces[i].rect.left));
-            byteBuf.writeBytes(SystemUtil.int2Bytes(faces[i].rect.top));
-            byteBuf.writeBytes(SystemUtil.int2Bytes(faces[i].rect.width));
-            byteBuf.writeBytes(SystemUtil.int2Bytes(faces[i].rect.height));
-            byteBuf.writeBytes(SystemUtil.float2Bytes(faces[i].confidence));
-        }
-        
-        byte data[] = new byte[byteCount];
-        byteBuf.readBytes(data);
-        return new SDKResult(State.Success, data);
-    }
-    
-    
-    public class ExtractThread implements Runnable{
-    
-        public ExtractThread(){
-            
-        }
-    
-        @Override
-        public void run() {
-    
-            logger.info("Running ExtractThread...");
-    
-            while (true){
-                try {
-                    DetectedBean detectedBean = extractQueue.take();
-                    HisignFaceV9.ImageTemplate[] templates = HisignFaceV9.extractBatch(detectedBean.images, detectedBean.faces);
-                    doTasks(detectedBean.taskList, templates);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        
-        private void doTasks(List<HBVEMessage> taskList, HisignFaceV9.ImageTemplate templates[]){
-            
-            //根据提取的特征, 将任务进行逐个的比对
-            int templateIndex = 0;
-            for (int i = 0; i < taskList.size(); i++){
-                HBVEMessage task = taskList.get(i);
-                SDKResult result = new SDKResult();
-                try {
-                    if (HBVEMessageType.getClientMessageType(task.header.messageType)
-                            .equals(HBVEMessageType.ClientMessageType.Similarity)) {
-                        byte fea1[], fea2[];
-                        if (task.computeSimilarityPara.type1 == 2) {
-                            fea1 = task.computeSimilarityPara.getFace1();
-                        }
-                        else {
-                            fea1 = templates[templateIndex++].template;
-                        }
-                        fea2 = task.computeSimilarityPara.type2 == 2 ? task.computeSimilarityPara.getFace2():templates[templateIndex++].template;
-                        float score = HisignFaceV9.compareFromTwoTemplates(fea1, fea2);
-    
-                        result.data = SystemUtil.int2Bytes(Float.floatToIntBits(score));
-                        result.state = State.Success;
-                    }
-                    else if (HBVEMessageType.getClientMessageType(task.header.messageType)
-                            .equals(HBVEMessageType.ClientMessageType.Extract_Template)) {
-    
-                        HisignFaceV9.ImageTemplate imageTemplate = templates[templateIndex++];
-                        result.data = imageTemplate.template;
-                        result.state = imageTemplate.state;
-                    }else{
-                        logger.error("Error Type:{}", task.header.messageType);
-                    }
-                }finally {
-                    sendResult(task, result);
-                }
-            }
-        }
-    }
     
     /**
      * 活跃通道.
@@ -393,11 +116,10 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
             currType = task.header.messageType;
             task.ctx = ctx;
     
-            logger.info(ctx.channel().remoteAddress() + "：" + msg);
             logger.info(tName + " thread. worker channelRead.." + " messageType:" +
                     task.header.messageType + " uuid:" + task.header.uuid + " para_len:" + task.data.length);
     
-            decodeQueue.offer(task);
+            SDKThreads.decodeQueue.offer(task);
         }catch (Exception e){
             e.printStackTrace();
         }finally {
@@ -433,28 +155,6 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
     	return result;
     }
     
-    public void sendResult(HBVEMessage task, SDKResult result){
-        byte[] uuid = task.header.uuid.getBytes();
-        sendResult(task.header.messageType, uuid, result, task.ctx);
-    }
-    
-    public void sendResult(byte type, byte[] uuid, SDKResult re, ChannelHandlerContext ctx){
-    
-        logger.info("Send Result to master, type:{}, re.data len:{}", type, re.data.length);
-    
-        int messageLen = 1 + uuid.length + 1 + re.data.length; //数据包大小。 type + uuid + state + data
-    	ByteBuf byteBuf = Unpooled.buffer(messageLen + 4);
-    	
-    	byteBuf.writeInt(messageLen);
-    	
-    	byteBuf.writeByte(type);
-    	byteBuf.writeBytes(uuid);
-    	byteBuf.writeByte(re.state.getValue());
-    	byteBuf.writeBytes(re.data);
-
-    	ctx.writeAndFlush(byteBuf);
-    }
-    
     /**
      * 异常处理.
      * @param ctx
@@ -464,7 +164,7 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         logger.info("异常信息：" + cause.getMessage());
-        sendResult((byte)currType, currUUID, new SDKResult(State.OtherError, new byte[4]), ctx);
+        SDKThreads.sendResult((byte)currType, currUUID, new SDKResult(State.OtherError, new byte[4]), ctx);
 		fetchJobFromMaster(ctx);
     }
 
@@ -472,82 +172,4 @@ public class NettyWorkerClientHandler extends ChannelInboundHandlerAdapter  {
         return (SystemConstants.MAGIC + SystemConstants.CURRENT_VERSION).getBytes();
     }
     
-    private class DecodeThread implements Runnable{
-    
-        @Override
-        public void run() {
-    
-            logger.info("Running DecodeThread...");
-            
-            while(true){
-                try {
-                    HBVEMessage task = decodeQueue.take();
-                    if (HBVEMessageType.getClientMessageType(task.header.messageType)
-                            .equals(HBVEMessageType.ClientMessageType.Similarity)) {
-                        
-                        ComputeSimilarityHandler.ComputeSimilarityPara computeSimilarityPara =
-                                ComputeSimilarityHandler.ComputeSimilarityPara.paraseData(task.data);
-    
-                        THIDFaceSDK.Image decodeImg1 = null, decodeImg2 = null;
-                        if (computeSimilarityPara.type1 == 1){
-                            decodeImg1 = HisignFaceV9.deocdeImage(computeSimilarityPara.getFace1());
-                            if(decodeImg1 == null){
-                                SDKResult result = new SDKResult(State.Image1Error, new byte[0]);
-                                sendResult(task, result);
-                                continue;
-                            }
-                        }
-                        if (computeSimilarityPara.type2 == 1){
-                            decodeImg2 = HisignFaceV9.deocdeImage(computeSimilarityPara.getFace2());
-                            if(decodeImg2 == null){
-                                SDKResult result = new SDKResult(State.Image2Error, new byte[0]);
-                                sendResult(task, result);
-                                continue;
-                            }
-                        }
-                        
-                        task.computeSimilarityPara = computeSimilarityPara;
-                        task.computeSimilarityPara.decodeFace1 = decodeImg1;
-                        task.computeSimilarityPara.decodeFace2 = decodeImg2;
-                        
-                    }
-                    else if (HBVEMessageType.getClientMessageType(task.header.messageType)
-                            .equals(HBVEMessageType.ClientMessageType.Extract_Template)) {
-    
-                        ExtractTemplateHandler.ExtractTemplatePara extractTemplatePara =
-                                ExtractTemplateHandler.ExtractTemplatePara.paraseData(task.data);
-                        THIDFaceSDK.Image decode = HisignFaceV9.deocdeImage(extractTemplatePara.getData());
-    
-                        if(decode == null){
-                            SDKResult result = new SDKResult(State.ImageError, new byte[0]);
-                            sendResult(task, result);
-                            continue;
-                        }
-                        
-                        task.extractTemplatePara = extractTemplatePara;
-                        task.extractTemplatePara.setDecodeImg(decode);
-                    }else if (HBVEMessageType.getClientMessageType(task.header.messageType)
-                            .equals(HBVEMessageType.ClientMessageType.DetectFace)) {
-    
-                        DetectHandler.DetectPara detectPara =
-                                DetectHandler.DetectPara.paraseData(task.data);
-                        THIDFaceSDK.Image decodeImg = HisignFaceV9.deocdeImage(detectPara.getImgData());
-    
-                        if(decodeImg == null){
-                            SDKResult result = new SDKResult(State.ImageError, new byte[0]);
-                            sendResult(task, result);
-                            continue;
-                        }
-                        task.detectPara = detectPara;
-                        task.detectPara.setDecodeImg(decodeImg);
-                    }
-                    detectQueue.offer(task);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (ParseParaException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
 }

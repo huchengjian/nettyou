@@ -7,9 +7,13 @@ import com.hisign.util.SystemUtil;
 
 public class SystemConstants {
     
+    public final static int CPU_MODE = 1;
+    public final static int GPU_MODE = 2;
+    
     public static int DECODE_THREAD_COUNT = 2;
     public static int DETECT_THREAD_COUNT = 4;
     public static int EXTRACT_THREAD_COUNT = 2;
+    public static int WORK_MODE = CPU_MODE;
 	
 	public static String SDKVersion = "8.3";
 	
